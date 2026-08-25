@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Workout Logger</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1>Workout Logger</h1>
+      <p>前回記録を見ながら、今回のトレーニングを記録します。</p>
+    </header>
+
+    <section class="card">
+      <h2>今日の設定</h2>
+
+      <label class="field">
+        <span>日付</span>
+        <input type="date" id="workoutDate" />
+      </label>
+
+      <label class="field">
+        <span>部位</span>
+        <select id="bodyPart">
+          <option value="">選択してください</option>
+          <option value="胸">胸</option>
+          <option value="背中">背中</option>
+          <option value="脚">脚</option>
+          <option value="腕">腕</option>
+          <option value="肩">肩</option>
+          <option value="腹">腹</option>
+          <option value="全身">全身</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>全体メモ</span>
+        <textarea id="sessionMemo" rows="2" placeholder="例：体調、混雑、フォーム感覚など"></textarea>
+      </label>
+
+      <button id="loadExercisesButton" class="button primary">
+        種目を読み込む
+      </button>
+    </section>
+
+    <section class="card">
+      <h2>種目</h2>
+
+      <div id="statusMessage" class="status-message">
+        部位を選んで「種目を読み込む」を押してください。
+      </div>
+
+      <div id="exerciseList" class="exercise-list"></div>
+    </section>
+
+    <section class="card submit-card">
+      <button id="submitButton" class="button submit" disabled>
+        Notionに登録する
+      </button>
+
+      <div id="submitMessage" class="submit-message"></div>
+    </section>
+  </main>
+
+  <template id="exerciseTemplate">
+    <article class="exercise-card">
+      <div class="exercise-header">
+        <div>
+          <h3 class="exercise-name"></h3>
+          <p class="exercise-category"></p>
+        </div>
+
+        <label class="use-exercise">
+          <input type="checkbox" class="exercise-enabled" checked />
+          <span>記録する</span>
+        </label>
+      </div>
+
+      <div class="last-workout">
+        <h4>前回</h4>
+        <div class="last-workout-content"></div>
+      </div>
+
+      <div class="current-workout">
+        <h4>今回</h4>
+
+        <div class="sets-container"></div>
+
+        <button type="button" class="button small add-set-button">
+          セット追加
+        </button>
+      </div>
+
+      <label class="field">
+        <span>種目メモ</span>
+        <textarea class="exercise-memo" rows="2" placeholder="フォーム、違和感、次回メモなど"></textarea>
+      </label>
+    </article>
+  </template>
+
+  <template id="setTemplate">
+    <div class="set-row">
+      <div class="set-number"></div>
+
+      <label>
+        <span>kg</span>
+        <input type="number" class="set-weight" inputmode="decimal" step="0.5" min="0" />
+      </label>
+
+      <label>
+        <span>回</span>
+        <input type="number" class="set-reps" inputmode="numeric" step="1" min="0" />
+      </label>
+
+      <label class="success-label">
+        <input type="checkbox" class="set-success" checked />
+        <span>成功</span>
+      </label>
+
+      <button type="button" class="remove-set-button" aria-label="セット削除">
+        ×
+      </button>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
