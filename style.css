@@ -360,28 +360,27 @@ textarea {
 .result-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
+  gap: 6px;
   align-self: end;
   height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  overflow: hidden;
-  background: #111111;
+  background: transparent;
 }
 
 .result-button {
   height: 100%;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #111111;
   color: var(--muted);
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   cursor: pointer;
   transition:
+    border-color 0.18s ease,
     background 0.18s ease,
     color 0.18s ease,
+    box-shadow 0.18s ease,
     transform 0.12s ease;
 }
 
@@ -390,15 +389,21 @@ textarea {
 }
 
 .result-button.success.active {
-  background: var(--gradient-orange);
-  color: #111111;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  border-color: #fb923c;
+  background: rgba(234, 88, 12, 0.16);
+  color: #fb923c;
+  box-shadow:
+    0 0 0 1px rgba(251, 146, 60, 0.18),
+    0 0 16px rgba(234, 88, 12, 0.16);
 }
 
 .result-button.fail.active {
-  background: var(--gradient-red);
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.14);
+  color: #f87171;
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.16),
+    0 0 16px rgba(239, 68, 68, 0.12);
 }
 
 .remove-set-button {
