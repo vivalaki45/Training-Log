@@ -19,6 +19,9 @@
 
   --success: #ea580c;
   --input: #151515;
+
+  --button-gradient-orange: linear-gradient(90deg, #ff8a1f 0%, #f97316 45%, #c2410c 100%);
+  --button-gradient-orange-active: linear-gradient(90deg, #f97316 0%, #ea580c 45%, #9a3412 100%);
 }
 
 * {
@@ -151,14 +154,15 @@ textarea {
 .button.primary,
 .button.secondary,
 .button.submit {
-  background: var(--primary);
+  background: var(--button-gradient-orange);
   color: #ffffff;
+  box-shadow: 0 10px 22px rgba(234, 88, 12, 0.18);
 }
 
 .button.primary:active,
 .button.secondary:active,
 .button.submit:active {
-  background: var(--primary-dark);
+  background: var(--button-gradient-orange-active);
 }
 
 .button.submit {
