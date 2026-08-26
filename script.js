@@ -199,17 +199,18 @@ function renderExerciseCard(exercise) {
     previousSets.forEach((set) => {
       addSetRow(setsContainer, {
         weight: set.weight,
-        reps: set.reps
+        reps: set.reps,
+        success: true
       });
     });
   } else {
-    addSetRow(setsContainer, { weight: '', reps: '' });
-    addSetRow(setsContainer, { weight: '', reps: '' });
-    addSetRow(setsContainer, { weight: '', reps: '' });
+    addSetRow(setsContainer, { weight: '', reps: '', success: true });
+    addSetRow(setsContainer, { weight: '', reps: '', success: true });
+    addSetRow(setsContainer, { weight: '', reps: '', success: true });
   }
 
   addSetButton.addEventListener('click', () => {
-    addSetRow(setsContainer, { weight: '', reps: '' });
+    addSetRow(setsContainer, { weight: '', reps: '', success: true });
   });
 
   moveUpButton.addEventListener('click', () => {
@@ -247,11 +248,15 @@ function renderLastWorkoutHtml(lastWorkout) {
     const setNo = set.setNo || '';
     const weight = set.weight ?? '';
     const reps = set.reps ?? '';
+    const success = set.success;
+
+    const failClass = success ? '' : ' last-set-fail';
+    const mark = success ? '○' : '×';
 
     return `
-      <div class="last-set-line">
+      <div class="last-set-line${failClass}">
         <span class="last-set-label">${setNo}set:</span>
-        <span>${weight}kg × ${reps}回</span>
+        <span>${weight}kg × ${reps}回 ${mark}</span>
       </div>
     `;
   }).join('');
@@ -270,7 +275,8 @@ function getPreviousSetsForInitialInput(lastWorkout) {
   return lastWorkout.sets.map((set) => {
     return {
       weight: set.weight ?? '',
-      reps: set.reps ?? ''
+      reps: set.reps ?? '',
+      success: set.success !== false
     };
   });
 }
@@ -282,9 +288,20 @@ function addSetRow(container, initialValue) {
   const weightInput = node.querySelector('.set-weight');
   const repsInput = node.querySelector('.set-reps');
   const removeButton = node.querySelector('.remove-set-button');
+  const resultButtons = node.querySelectorAll('.result-button');
 
   weightInput.value = initialValue.weight ?? '';
   repsInput.value = initialValue.reps ?? '';
+  row.dataset.success = initialValue.success === false ? 'false' : 'true';
+
+  updateResultButtons(row);
+
+  resultButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      row.dataset.success = button.dataset.success;
+      updateResultButtons(row);
+    });
+  });
 
   removeButton.addEventListener('click', () => {
     row.remove();
@@ -293,6 +310,15 @@ function addSetRow(container, initialValue) {
 
   container.appendChild(node);
   refreshSetNumbers(container);
+}
+
+function updateResultButtons(row) {
+  const success = row.dataset.success !== 'false';
+  const successButton = row.querySelector('.result-button.success');
+  const failButton = row.querySelector('.result-button.fail');
+
+  successButton.classList.toggle('active', success);
+  failButton.classList.toggle('active', !success);
 }
 
 function refreshSetNumbers(container) {
@@ -332,6 +358,7 @@ function collectWorkoutPayload() {
     rows.forEach((row, index) => {
       const weightValue = row.querySelector('.set-weight').value;
       const repsValue = row.querySelector('.set-reps').value;
+      const success = row.dataset.success !== 'false';
 
       if (weightValue === '' && repsValue === '') {
         return;
@@ -350,7 +377,7 @@ function collectWorkoutPayload() {
         setNo: index + 1,
         weight: weight,
         reps: reps,
-        success: true,
+        success: success,
         memo: exerciseMemo
       });
     });
