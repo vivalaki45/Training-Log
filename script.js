@@ -1,11 +1,5 @@
 /**
  * Workout Logger - GitHub Pages script.js
- *
- * 役割：
- * - GASからExercise Master DBの種目一覧を取得
- * - 前回記録を表示
- * - 今回のトレーニングを入力
- * - GASへPOSTしてNotionに登録
  */
 
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
@@ -14,29 +8,27 @@ const workoutDateInput = document.getElementById('workoutDate');
 const bodyPartSelect = document.getElementById('bodyPart');
 const sessionMemoInput = document.getElementById('sessionMemo');
 const loadExercisesButton = document.getElementById('loadExercisesButton');
+const addSelectedExercisesButton = document.getElementById('addSelectedExercisesButton');
+const exercisePicker = document.getElementById('exercisePicker');
 const exerciseList = document.getElementById('exerciseList');
 const statusMessage = document.getElementById('statusMessage');
 const submitButton = document.getElementById('submitButton');
 const submitMessage = document.getElementById('submitMessage');
 
+const pickerItemTemplate = document.getElementById('pickerItemTemplate');
 const exerciseTemplate = document.getElementById('exerciseTemplate');
 const setTemplate = document.getElementById('setTemplate');
 
 let loadedExercises = [];
 
-/**
- * 初期化
- */
 function init() {
   workoutDateInput.value = getTodayIsoDate();
 
   loadExercisesButton.addEventListener('click', handleLoadExercises);
+  addSelectedExercisesButton.addEventListener('click', handleAddSelectedExercises);
   submitButton.addEventListener('click', handleSubmitWorkout);
 }
 
-/**
- * 今日の日付を yyyy-MM-dd で返す
- */
 function getTodayIsoDate() {
   const now = new Date();
   const offset = now.getTimezoneOffset();
@@ -44,16 +36,10 @@ function getTodayIsoDate() {
   return local.toISOString().slice(0, 10);
 }
 
-/**
- * ステータスメッセージ表示
- */
 function setStatus(message) {
   statusMessage.textContent = message;
 }
 
-/**
- * 送信メッセージ表示
- */
 function setSubmitMessage(message, type) {
   submitMessage.textContent = message || '';
   submitMessage.className = 'submit-message';
@@ -63,9 +49,6 @@ function setSubmitMessage(message, type) {
   }
 }
 
-/**
- * GASへGETリクエスト
- */
 async function getFromGas(params) {
   const url = new URL(GAS_WEB_APP_URL);
 
@@ -83,9 +66,6 @@ async function getFromGas(params) {
   return data;
 }
 
-/**
- * GASへPOSTリクエスト
- */
 async function postToGas(payload) {
   const response = await fetch(GAS_WEB_APP_URL, {
     method: 'POST',
@@ -104,9 +84,6 @@ async function postToGas(payload) {
   return data;
 }
 
-/**
- * 種目読み込み
- */
 async function handleLoadExercises() {
   const bodyPart = bodyPartSelect.value;
 
@@ -115,10 +92,12 @@ async function handleLoadExercises() {
     return;
   }
 
-  setStatus('種目と前回記録を読み込み中...');
+  setStatus('種目を読み込み中...');
   setSubmitMessage('', '');
-  submitButton.disabled = true;
+  exercisePicker.innerHTML = '';
   exerciseList.innerHTML = '';
+  submitButton.disabled = true;
+  addSelectedExercisesButton.disabled = true;
 
   try {
     const data = await getFromGas({
@@ -129,13 +108,13 @@ async function handleLoadExercises() {
     loadedExercises = data.exercises || [];
 
     if (loadedExercises.length === 0) {
-      setStatus('この部位の種目がありません。Exercise Master DBを確認してください。');
+      setStatus('この部位の種目がありません。');
       return;
     }
 
-    renderExercises(loadedExercises);
-    setStatus(`${bodyPart}の種目を読み込みました。`);
-    submitButton.disabled = false;
+    renderExercisePicker(loadedExercises);
+    setStatus(`${bodyPart}の種目を読み込みました。今日やる種目を選んでください。`);
+    addSelectedExercisesButton.disabled = false;
 
   } catch (error) {
     console.error(error);
@@ -143,72 +122,120 @@ async function handleLoadExercises() {
   }
 }
 
-/**
- * 種目一覧を描画
- */
-function renderExercises(exercises) {
-  exerciseList.innerHTML = '';
+function renderExercisePicker(exercises) {
+  exercisePicker.innerHTML = '';
 
   exercises.forEach((exercise) => {
-    const node = exerciseTemplate.content.cloneNode(true);
-    const card = node.querySelector('.exercise-card');
+    const node = pickerItemTemplate.content.cloneNode(true);
+    const item = node.querySelector('.picker-item');
+    const checkbox = node.querySelector('.picker-checkbox');
 
-    card.dataset.exerciseId = exercise.id;
-    card.dataset.exerciseName = exercise.name;
+    item.dataset.exerciseId = exercise.id;
+    checkbox.value = exercise.id;
 
-    node.querySelector('.exercise-name').textContent = exercise.name;
-    node.querySelector('.exercise-category').textContent =
+    node.querySelector('.picker-name').textContent = exercise.name;
+    node.querySelector('.picker-category').textContent =
       [exercise.bodyPart, exercise.category].filter(Boolean).join(' / ');
 
-    const lastWorkoutContent = node.querySelector('.last-workout-content');
-    lastWorkoutContent.innerHTML = renderLastWorkoutHtml(exercise.lastWorkout);
-
-    const setsContainer = node.querySelector('.sets-container');
-    const addSetButton = node.querySelector('.add-set-button');
-
-    const previousSets = getPreviousSetsForInitialInput(exercise.lastWorkout);
-
-    if (previousSets.length > 0) {
-      previousSets.forEach((set) => {
-        addSetRow(setsContainer, {
-          weight: set.weight,
-          reps: set.reps,
-          success: true
-        });
-      });
-    } else {
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
-    }
-
-    addSetButton.addEventListener('click', () => {
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
-    });
-
-    exerciseList.appendChild(node);
+    exercisePicker.appendChild(node);
   });
 }
 
-/**
- * 前回記録HTML
- */
+function handleAddSelectedExercises() {
+  const checked = exercisePicker.querySelectorAll('.picker-checkbox:checked');
+
+  if (checked.length === 0) {
+    alert('今日やる種目を選んでください。');
+    return;
+  }
+
+  checked.forEach((checkbox) => {
+    const exerciseId = checkbox.value;
+    const exercise = loadedExercises.find((item) => item.id === exerciseId);
+
+    if (!exercise) {
+      return;
+    }
+
+    if (isExerciseAlreadyAdded(exercise.id)) {
+      return;
+    }
+
+    renderExerciseCard(exercise);
+  });
+
+  submitButton.disabled = exerciseList.querySelectorAll('.exercise-card').length === 0;
+}
+
+function isExerciseAlreadyAdded(exerciseId) {
+  return Boolean(
+    exerciseList.querySelector(`.exercise-card[data-exercise-id="${exerciseId}"]`)
+  );
+}
+
+function renderExerciseCard(exercise) {
+  const node = exerciseTemplate.content.cloneNode(true);
+  const card = node.querySelector('.exercise-card');
+
+  card.dataset.exerciseId = exercise.id;
+  card.dataset.exerciseName = exercise.name;
+
+  node.querySelector('.exercise-name').textContent = exercise.name;
+  node.querySelector('.exercise-category').textContent =
+    [exercise.bodyPart, exercise.category].filter(Boolean).join(' / ');
+
+  const lastWorkoutContent = node.querySelector('.last-workout-content');
+  lastWorkoutContent.innerHTML = renderLastWorkoutHtml(exercise.lastWorkout);
+
+  const setsContainer = node.querySelector('.sets-container');
+  const addSetButton = node.querySelector('.add-set-button');
+  const moveUpButton = node.querySelector('.move-up-button');
+  const moveDownButton = node.querySelector('.move-down-button');
+  const removeExerciseButton = node.querySelector('.remove-exercise-button');
+
+  const previousSets = getPreviousSetsForInitialInput(exercise.lastWorkout);
+
+  if (previousSets.length > 0) {
+    previousSets.forEach((set) => {
+      addSetRow(setsContainer, {
+        weight: set.weight,
+        reps: set.reps
+      });
+    });
+  } else {
+    addSetRow(setsContainer, { weight: '', reps: '' });
+    addSetRow(setsContainer, { weight: '', reps: '' });
+    addSetRow(setsContainer, { weight: '', reps: '' });
+  }
+
+  addSetButton.addEventListener('click', () => {
+    addSetRow(setsContainer, { weight: '', reps: '' });
+  });
+
+  moveUpButton.addEventListener('click', () => {
+    const previous = card.previousElementSibling;
+
+    if (previous) {
+      exerciseList.insertBefore(card, previous);
+    }
+  });
+
+  moveDownButton.addEventListener('click', () => {
+    const next = card.nextElementSibling;
+
+    if (next) {
+      exerciseList.insertBefore(next, card);
+    }
+  });
+
+  removeExerciseButton.addEventListener('click', () => {
+    card.remove();
+    submitButton.disabled = exerciseList.querySelectorAll('.exercise-card').length === 0;
+  });
+
+  exerciseList.appendChild(node);
+}
+
 function renderLastWorkoutHtml(lastWorkout) {
   if (!lastWorkout || !lastWorkout.sets || lastWorkout.sets.length === 0) {
     return '<div class="last-workout-empty">前回記録なし</div>';
@@ -220,15 +247,11 @@ function renderLastWorkoutHtml(lastWorkout) {
     const setNo = set.setNo || '';
     const weight = set.weight ?? '';
     const reps = set.reps ?? '';
-    const success = set.success;
-
-    const failClass = success ? '' : ' last-set-fail';
-    const failText = success ? '' : ' 失敗';
 
     return `
-      <div class="last-set-line${failClass}">
+      <div class="last-set-line">
         <span class="last-set-label">${setNo}set:</span>
-        <span>${weight}kg × ${reps}回${failText}</span>
+        <span>${weight}kg × ${reps}回</span>
       </div>
     `;
   }).join('');
@@ -239,14 +262,6 @@ function renderLastWorkoutHtml(lastWorkout) {
   `;
 }
 
-/**
- * 前回記録を今回入力欄の初期値に使う
- *
- * 方針：
- * - weightは前回と同じ値を入れる
- * - repsも前回値を入れる
- * - 成功はチェックあり
- */
 function getPreviousSetsForInitialInput(lastWorkout) {
   if (!lastWorkout || !lastWorkout.sets) {
     return [];
@@ -255,27 +270,21 @@ function getPreviousSetsForInitialInput(lastWorkout) {
   return lastWorkout.sets.map((set) => {
     return {
       weight: set.weight ?? '',
-      reps: set.reps ?? '',
-      success: true
+      reps: set.reps ?? ''
     };
   });
 }
 
-/**
- * セット行追加
- */
 function addSetRow(container, initialValue) {
   const node = setTemplate.content.cloneNode(true);
   const row = node.querySelector('.set-row');
 
   const weightInput = node.querySelector('.set-weight');
   const repsInput = node.querySelector('.set-reps');
-  const successInput = node.querySelector('.set-success');
   const removeButton = node.querySelector('.remove-set-button');
 
   weightInput.value = initialValue.weight ?? '';
   repsInput.value = initialValue.reps ?? '';
-  successInput.checked = initialValue.success !== false;
 
   removeButton.addEventListener('click', () => {
     row.remove();
@@ -286,9 +295,6 @@ function addSetRow(container, initialValue) {
   refreshSetNumbers(container);
 }
 
-/**
- * セット番号を振り直す
- */
 function refreshSetNumbers(container) {
   const rows = container.querySelectorAll('.set-row');
 
@@ -298,9 +304,6 @@ function refreshSetNumbers(container) {
   });
 }
 
-/**
- * 入力内容を集める
- */
 function collectWorkoutPayload() {
   const date = workoutDateInput.value;
   const bodyPart = bodyPartSelect.value;
@@ -315,18 +318,11 @@ function collectWorkoutPayload() {
   }
 
   const sessionName = `${date.replaceAll('-', '/')} ${bodyPart}`;
-
   const sets = [];
 
   const cards = exerciseList.querySelectorAll('.exercise-card');
 
   cards.forEach((card) => {
-    const enabled = card.querySelector('.exercise-enabled').checked;
-
-    if (!enabled) {
-      return;
-    }
-
     const exerciseId = card.dataset.exerciseId;
     const exerciseName = card.dataset.exerciseName;
     const exerciseMemo = card.querySelector('.exercise-memo').value.trim();
@@ -336,7 +332,6 @@ function collectWorkoutPayload() {
     rows.forEach((row, index) => {
       const weightValue = row.querySelector('.set-weight').value;
       const repsValue = row.querySelector('.set-reps').value;
-      const success = row.querySelector('.set-success').checked;
 
       if (weightValue === '' && repsValue === '') {
         return;
@@ -355,7 +350,7 @@ function collectWorkoutPayload() {
         setNo: index + 1,
         weight: weight,
         reps: reps,
-        success: success,
+        success: true,
         memo: exerciseMemo
       });
     });
@@ -374,16 +369,13 @@ function collectWorkoutPayload() {
   };
 }
 
-/**
- * Notion登録
- */
 async function handleSubmitWorkout() {
-  if (!confirm('この内容でNotionに登録しますか？')) {
+  if (!confirm('この内容でNotionに保存しますか？')) {
     return;
   }
 
   submitButton.disabled = true;
-  setSubmitMessage('登録中...', '');
+  setSubmitMessage('保存中...', '');
 
   try {
     const payload = collectWorkoutPayload();
@@ -391,11 +383,11 @@ async function handleSubmitWorkout() {
 
     console.log(result);
 
-    setSubmitMessage('登録しました。Notionを確認してください。', 'success');
+    setSubmitMessage('保存しました。', 'success');
 
   } catch (error) {
     console.error(error);
-    setSubmitMessage('登録に失敗しました: ' + error.message, 'error');
+    setSubmitMessage('保存に失敗しました: ' + error.message, 'error');
     submitButton.disabled = false;
   }
 }
