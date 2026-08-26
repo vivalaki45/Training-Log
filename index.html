@@ -12,7 +12,6 @@
   <main class="app">
     <header class="app-header">
       <h1>Workout Logger</h1>
-      <p>前回記録を見ながら、今回のトレーニングを記録します。</p>
     </header>
 
     <section class="card">
@@ -48,23 +47,41 @@
     </section>
 
     <section class="card">
-      <h2>種目</h2>
+      <h2>今日やる種目を選ぶ</h2>
 
       <div id="statusMessage" class="status-message">
         部位を選んで「種目を読み込む」を押してください。
       </div>
+
+      <div id="exercisePicker" class="exercise-picker"></div>
+
+      <button id="addSelectedExercisesButton" class="button secondary" disabled>
+        選んだ種目を追加
+      </button>
+    </section>
+
+    <section class="card">
+      <h2>今回のトレーニング</h2>
 
       <div id="exerciseList" class="exercise-list"></div>
     </section>
 
     <section class="card submit-card">
       <button id="submitButton" class="button submit" disabled>
-        Notionに登録する
+        Notionに保存
       </button>
 
       <div id="submitMessage" class="submit-message"></div>
     </section>
   </main>
+
+  <template id="pickerItemTemplate">
+    <label class="picker-item">
+      <input type="checkbox" class="picker-checkbox" />
+      <span class="picker-name"></span>
+      <span class="picker-category"></span>
+    </label>
+  </template>
 
   <template id="exerciseTemplate">
     <article class="exercise-card">
@@ -74,10 +91,11 @@
           <p class="exercise-category"></p>
         </div>
 
-        <label class="use-exercise">
-          <input type="checkbox" class="exercise-enabled" checked />
-          <span>記録する</span>
-        </label>
+        <div class="exercise-actions">
+          <button type="button" class="move-up-button">↑</button>
+          <button type="button" class="move-down-button">↓</button>
+          <button type="button" class="remove-exercise-button">削除</button>
+        </div>
       </div>
 
       <div class="last-workout">
@@ -114,11 +132,6 @@
       <label>
         <span>回</span>
         <input type="number" class="set-reps" inputmode="numeric" step="1" min="0" />
-      </label>
-
-      <label class="success-label">
-        <input type="checkbox" class="set-success" checked />
-        <span>成功</span>
       </label>
 
       <button type="button" class="remove-set-button" aria-label="セット削除">
