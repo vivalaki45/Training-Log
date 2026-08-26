@@ -12,6 +12,11 @@
   <main class="app">
     <header class="app-header">
       <h1>Workout Logger</h1>
+
+      <div class="training-rule">
+        <div>前回より、１回でも多く、１kgでも重く</div>
+        <div>10回出来たら次ある重さに</div>
+      </div>
     </header>
 
     <section class="card">
@@ -133,6 +138,11 @@
         <span>回</span>
         <input type="number" class="set-reps" inputmode="numeric" step="1" min="0" />
       </label>
+
+      <div class="result-toggle" role="group" aria-label="成功失敗">
+        <button type="button" class="result-button success active" data-success="true">○</button>
+        <button type="button" class="result-button fail" data-success="false">×</button>
+      </div>
 
       <button type="button" class="remove-set-button" aria-label="セット削除">
         ×
