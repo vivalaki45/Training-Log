@@ -5,11 +5,11 @@
   --text: #f4f4f4;
   --muted: #a7a7a7;
   --line: #333333;
-  --primary: #4f8cff;
-  --primary-dark: #2f6fe8;
+  --primary: #f59e0b;
+  --primary-dark: #d97706;
+  --primary-soft: rgba(245, 158, 11, 0.16);
   --danger: #ff5c5c;
-  --success: #37c978;
-  --warning: #f4c542;
+  --success: #f59e0b;
   --input: #151515;
 }
 
@@ -55,16 +55,9 @@ textarea {
 }
 
 .app-header h1 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 28px;
   line-height: 1.2;
-}
-
-.app-header p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .card {
@@ -110,7 +103,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--primary-soft);
 }
 
 textarea {
@@ -123,9 +116,9 @@ textarea {
   border: 0;
   border-radius: 14px;
   padding: 14px 16px;
-  color: white;
-  background: var(--card-2);
-  font-weight: 700;
+  color: #111111;
+  background: var(--primary);
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -134,16 +127,19 @@ textarea {
   cursor: not-allowed;
 }
 
-.button.primary {
+.button.primary,
+.button.secondary,
+.button.submit {
   background: var(--primary);
 }
 
-.button.primary:active {
+.button.primary:active,
+.button.secondary:active,
+.button.submit:active {
   background: var(--primary-dark);
 }
 
 .button.submit {
-  background: var(--success);
   font-size: 17px;
 }
 
@@ -152,7 +148,8 @@ textarea {
   padding: 9px 12px;
   border-radius: 10px;
   font-size: 14px;
-  background: var(--card-2);
+  background: var(--primary);
+  color: #111111;
 }
 
 .status-message,
@@ -167,11 +164,41 @@ textarea {
 }
 
 .submit-message.success {
-  color: var(--success);
+  color: var(--primary);
 }
 
 .submit-message.error {
   color: var(--danger);
+}
+
+.exercise-picker {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+.picker-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.picker-item input {
+  width: auto;
+}
+
+.picker-name {
+  font-weight: 700;
+}
+
+.picker-category {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .exercise-list {
@@ -206,18 +233,26 @@ textarea {
   font-size: 13px;
 }
 
-.use-exercise {
-  flex: 0 0 auto;
+.exercise-actions {
   display: flex;
-  align-items: center;
   gap: 6px;
-  color: var(--muted);
-  font-size: 13px;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.use-exercise input {
-  width: auto;
+.exercise-actions button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--input);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.exercise-actions .remove-exercise-button {
+  color: var(--danger);
 }
 
 .last-workout,
@@ -255,10 +290,6 @@ textarea {
   color: var(--muted);
 }
 
-.last-set-fail {
-  color: var(--danger);
-}
-
 .sets-container {
   display: grid;
   gap: 10px;
@@ -266,7 +297,7 @@ textarea {
 
 .set-row {
   display: grid;
-  grid-template-columns: 36px 1fr 1fr auto 32px;
+  grid-template-columns: 36px 1fr 1fr 32px;
   gap: 8px;
   align-items: end;
   background: var(--input);
@@ -293,20 +324,6 @@ textarea {
 .set-row input[type="number"] {
   padding: 10px;
   border-radius: 10px;
-}
-
-.success-label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding-bottom: 10px;
-  color: var(--muted);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.success-label input {
-  width: auto;
 }
 
 .remove-set-button {
@@ -348,21 +365,19 @@ textarea {
     flex-direction: column;
   }
 
-  .use-exercise {
-    align-self: flex-start;
+  .exercise-actions {
+    justify-content: flex-start;
+  }
+
+  .picker-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .picker-category {
+    grid-column: 2 / 3;
   }
 
   .set-row {
-    grid-template-columns: 30px 1fr 1fr;
-  }
-
-  .success-label {
-    grid-column: 2 / 3;
-    padding-bottom: 0;
-  }
-
-  .remove-set-button {
-    grid-column: 3 / 4;
-    justify-self: end;
+    grid-template-columns: 30px 1fr 1fr 32px;
   }
 }
