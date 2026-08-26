@@ -251,7 +251,7 @@ function renderLastWorkoutHtml(lastWorkout) {
     const success = set.success;
 
     const failClass = success ? '' : ' last-set-fail';
-    const mark = success ? '○' : '×';
+    const mark = success ? 'GOOD' : 'FAIL';
 
     return `
       <div class="last-set-line${failClass}">
