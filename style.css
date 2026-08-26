@@ -387,21 +387,17 @@ textarea {
 }
 
 .result-button.success.active {
-  border-color: #fb923c;
-  background: rgba(234, 88, 12, 0.16);
-  color: #fb923c;
-  box-shadow:
-    0 0 0 1px rgba(251, 146, 60, 0.18),
-    0 0 16px rgba(234, 88, 12, 0.16);
+  border-color: #ea580c;
+  background: #ea580c;
+  color: #111111;
+  box-shadow: none;
 }
 
 .result-button.fail.active {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.14);
-  color: #f87171;
-  box-shadow:
-    0 0 0 1px rgba(239, 68, 68, 0.16),
-    0 0 16px rgba(239, 68, 68, 0.12);
+  border-color: #b91c1c;
+  background: #b91c1c;
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .remove-set-button {
