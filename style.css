@@ -22,6 +22,14 @@
 
   --button-gradient-orange: linear-gradient(90deg, #ff8a1f 0%, #f97316 45%, #c2410c 100%);
   --button-gradient-orange-active: linear-gradient(90deg, #f97316 0%, #ea580c 45%, #9a3412 100%);
+
+  --body-chest: #ef4444;
+  --body-back: #3b82f6;
+  --body-legs: #22c55e;
+  --body-arms: #a855f7;
+  --body-shoulders: #f97316;
+  --body-abs: #eab308;
+  --body-full: #94a3b8;
 }
 
 * {
@@ -78,6 +86,40 @@ textarea {
   font-weight: 600;
   line-height: 1.7;
   letter-spacing: 0.02em;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #151515;
+}
+
+.tab-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
 }
 
 .card {
@@ -153,7 +195,8 @@ textarea {
 
 .button.primary,
 .button.secondary,
-.button.submit {
+.button.submit,
+.button.calendar-today-button {
   background: var(--button-gradient-orange);
   color: #ffffff;
   box-shadow: 0 10px 22px rgba(234, 88, 12, 0.18);
@@ -161,7 +204,8 @@ textarea {
 
 .button.primary:active,
 .button.secondary:active,
-.button.submit:active {
+.button.submit:active,
+.button.calendar-today-button:active {
   background: var(--button-gradient-orange-active);
 }
 
@@ -182,7 +226,8 @@ textarea {
 }
 
 .status-message,
-.submit-message {
+.submit-message,
+.calendar-status {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
@@ -432,6 +477,154 @@ textarea {
   margin-bottom: 0;
 }
 
+.calendar-card {
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-header h2 {
+  margin: 0;
+  text-align: center;
+}
+
+.calendar-status {
+  text-align: center;
+  margin-top: 2px;
+}
+
+.calendar-nav-button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--input);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-today-button {
+  margin-bottom: 14px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day {
+  min-height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--input);
+  padding: 6px;
+  overflow: hidden;
+}
+
+.calendar-day.empty {
+  opacity: 0.35;
+}
+
+.calendar-day.today {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-soft);
+}
+
+.calendar-day-number {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.calendar-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.body-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.body-chest {
+  background: var(--body-chest);
+}
+
+.body-back {
+  background: var(--body-back);
+}
+
+.body-legs {
+  background: var(--body-legs);
+}
+
+.body-arms {
+  background: var(--body-arms);
+}
+
+.body-shoulders {
+  background: var(--body-shoulders);
+}
+
+.body-abs {
+  background: var(--body-abs);
+}
+
+.body-full {
+  background: var(--body-full);
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
 @media (max-width: 520px) {
   .app {
     padding: 12px;
@@ -471,5 +664,27 @@ textarea {
   .remove-set-button {
     grid-column: 3 / 4;
     justify-self: end;
+  }
+
+  .calendar-day {
+    min-height: 58px;
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  .calendar-day-number {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .body-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+
+  .calendar-nav-button {
+    padding: 9px 10px;
+    font-size: 12px;
   }
 }
