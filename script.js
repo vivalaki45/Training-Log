@@ -1,5 +1,13 @@
 /**
  * Workout Logger - GitHub Pages script.js
+ *
+ * 機能：
+ * - 記録 / カレンダーのタブ切り替え
+ * - 部位別の種目読み込み
+ * - 種目ごとの直近記録表示
+ * - 数値入力欄をタップしたら全選択
+ * - 今回のトレーニングをNotionに保存
+ * - 月曜始まりの月カレンダー表示
  */
 
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
@@ -19,16 +27,79 @@ const pickerItemTemplate = document.getElementById('pickerItemTemplate');
 const exerciseTemplate = document.getElementById('exerciseTemplate');
 const setTemplate = document.getElementById('setTemplate');
 
-let loadedExercises = [];
+const tabButtons = document.querySelectorAll('.tab-button');
+const logTab = document.getElementById('logTab');
+const calendarTab = document.getElementById('calendarTab');
 
+const prevMonthButton = document.getElementById('prevMonthButton');
+const nextMonthButton = document.getElementById('nextMonthButton');
+const todayMonthButton = document.getElementById('todayMonthButton');
+const calendarTitle = document.getElementById('calendarTitle');
+const calendarStatus = document.getElementById('calendarStatus');
+const calendarGrid = document.getElementById('calendarGrid');
+
+let loadedExercises = [];
+let currentCalendarDate = new Date();
+
+/**
+ * 初期化
+ */
 function init() {
   workoutDateInput.value = getTodayIsoDate();
 
   loadExercisesButton.addEventListener('click', handleLoadExercises);
   addSelectedExercisesButton.addEventListener('click', handleAddSelectedExercises);
   submitButton.addEventListener('click', handleSubmitWorkout);
+
+  tabButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      switchTab(button.dataset.tab);
+    });
+  });
+
+  prevMonthButton.addEventListener('click', () => {
+    currentCalendarDate = new Date(
+      currentCalendarDate.getFullYear(),
+      currentCalendarDate.getMonth() - 1,
+      1
+    );
+    loadCalendar();
+  });
+
+  nextMonthButton.addEventListener('click', () => {
+    currentCalendarDate = new Date(
+      currentCalendarDate.getFullYear(),
+      currentCalendarDate.getMonth() + 1,
+      1
+    );
+    loadCalendar();
+  });
+
+  todayMonthButton.addEventListener('click', () => {
+    currentCalendarDate = new Date();
+    loadCalendar();
+  });
 }
 
+/**
+ * タブ切り替え
+ */
+function switchTab(tabName) {
+  tabButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.tab === tabName);
+  });
+
+  logTab.classList.toggle('active', tabName === 'log');
+  calendarTab.classList.toggle('active', tabName === 'calendar');
+
+  if (tabName === 'calendar') {
+    loadCalendar();
+  }
+}
+
+/**
+ * 今日の日付を yyyy-MM-dd で返す
+ */
 function getTodayIsoDate() {
   const now = new Date();
   const offset = now.getTimezoneOffset();
@@ -36,10 +107,16 @@ function getTodayIsoDate() {
   return local.toISOString().slice(0, 10);
 }
 
+/**
+ * ステータスメッセージ表示
+ */
 function setStatus(message) {
   statusMessage.textContent = message;
 }
 
+/**
+ * 送信メッセージ表示
+ */
 function setSubmitMessage(message, type) {
   submitMessage.textContent = message || '';
   submitMessage.className = 'submit-message';
@@ -49,6 +126,9 @@ function setSubmitMessage(message, type) {
   }
 }
 
+/**
+ * GASへGETリクエスト
+ */
 async function getFromGas(params) {
   const url = new URL(GAS_WEB_APP_URL);
 
@@ -66,6 +146,9 @@ async function getFromGas(params) {
   return data;
 }
 
+/**
+ * GASへPOSTリクエスト
+ */
 async function postToGas(payload) {
   const response = await fetch(GAS_WEB_APP_URL, {
     method: 'POST',
@@ -84,6 +167,9 @@ async function postToGas(payload) {
   return data;
 }
 
+/**
+ * 種目読み込み
+ */
 async function handleLoadExercises() {
   const bodyPart = bodyPartSelect.value;
 
@@ -122,6 +208,9 @@ async function handleLoadExercises() {
   }
 }
 
+/**
+ * 種目選択リストを描画
+ */
 function renderExercisePicker(exercises) {
   exercisePicker.innerHTML = '';
 
@@ -141,6 +230,9 @@ function renderExercisePicker(exercises) {
   });
 }
 
+/**
+ * 選んだ種目を今回のトレーニングに追加
+ */
 function handleAddSelectedExercises() {
   const checked = exercisePicker.querySelectorAll('.picker-checkbox:checked');
 
@@ -167,12 +259,18 @@ function handleAddSelectedExercises() {
   submitButton.disabled = exerciseList.querySelectorAll('.exercise-card').length === 0;
 }
 
+/**
+ * 同じ種目がすでに追加済みか判定
+ */
 function isExerciseAlreadyAdded(exerciseId) {
   return Boolean(
     exerciseList.querySelector(`.exercise-card[data-exercise-id="${exerciseId}"]`)
   );
 }
 
+/**
+ * 種目カードを描画
+ */
 function renderExerciseCard(exercise) {
   const node = exerciseTemplate.content.cloneNode(true);
   const card = node.querySelector('.exercise-card');
@@ -200,7 +298,7 @@ function renderExerciseCard(exercise) {
       addSetRow(setsContainer, {
         weight: set.weight,
         reps: set.reps,
-        success: true
+        success: set.success
       });
     });
   } else {
@@ -237,9 +335,12 @@ function renderExerciseCard(exercise) {
   exerciseList.appendChild(node);
 }
 
+/**
+ * 直近記録HTML
+ */
 function renderLastWorkoutHtml(lastWorkout) {
   if (!lastWorkout || !lastWorkout.sets || lastWorkout.sets.length === 0) {
-    return '<div class="last-workout-empty">前回記録なし</div>';
+    return '<div class="last-workout-empty">直近記録なし</div>';
   }
 
   const date = lastWorkout.lastDate || '';
@@ -267,6 +368,9 @@ function renderLastWorkoutHtml(lastWorkout) {
   `;
 }
 
+/**
+ * 直近記録を今回入力欄の初期値に使う
+ */
 function getPreviousSetsForInitialInput(lastWorkout) {
   if (!lastWorkout || !lastWorkout.sets) {
     return [];
@@ -281,6 +385,9 @@ function getPreviousSetsForInitialInput(lastWorkout) {
   });
 }
 
+/**
+ * セット行追加
+ */
 function addSetRow(container, initialValue) {
   const node = setTemplate.content.cloneNode(true);
   const row = node.querySelector('.set-row');
@@ -293,6 +400,9 @@ function addSetRow(container, initialValue) {
   weightInput.value = initialValue.weight ?? '';
   repsInput.value = initialValue.reps ?? '';
   row.dataset.success = initialValue.success === false ? 'false' : 'true';
+
+  enableSelectAllOnFocus(weightInput);
+  enableSelectAllOnFocus(repsInput);
 
   updateResultButtons(row);
 
@@ -312,6 +422,30 @@ function addSetRow(container, initialValue) {
   refreshSetNumbers(container);
 }
 
+/**
+ * 入力欄を押した時に全選択する
+ */
+function enableSelectAllOnFocus(input) {
+  input.addEventListener('focus', () => {
+    setTimeout(() => {
+      input.select();
+    }, 0);
+  });
+
+  input.addEventListener('mouseup', (event) => {
+    event.preventDefault();
+  });
+
+  input.addEventListener('touchend', () => {
+    setTimeout(() => {
+      input.select();
+    }, 0);
+  });
+}
+
+/**
+ * GOOD / FAIL 表示更新
+ */
 function updateResultButtons(row) {
   const success = row.dataset.success !== 'false';
   const successButton = row.querySelector('.result-button.success');
@@ -321,6 +455,9 @@ function updateResultButtons(row) {
   failButton.classList.toggle('active', !success);
 }
 
+/**
+ * セット番号を振り直す
+ */
 function refreshSetNumbers(container) {
   const rows = container.querySelectorAll('.set-row');
 
@@ -330,6 +467,9 @@ function refreshSetNumbers(container) {
   });
 }
 
+/**
+ * 入力内容を集める
+ */
 function collectWorkoutPayload() {
   const date = workoutDateInput.value;
   const bodyPart = bodyPartSelect.value;
@@ -396,6 +536,9 @@ function collectWorkoutPayload() {
   };
 }
 
+/**
+ * Notionに保存
+ */
 async function handleSubmitWorkout() {
   if (!confirm('この内容でNotionに保存しますか？')) {
     return;
@@ -412,11 +555,207 @@ async function handleSubmitWorkout() {
 
     setSubmitMessage('保存しました。', 'success');
 
+    await loadCalendar();
+
   } catch (error) {
     console.error(error);
     setSubmitMessage('保存に失敗しました: ' + error.message, 'error');
     submitButton.disabled = false;
   }
+}
+
+/**
+ * カレンダー読み込み
+ */
+async function loadCalendar() {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth() + 1;
+
+  calendarTitle.textContent = `${year}年${month}月`;
+  calendarStatus.textContent = '読み込み中...';
+  calendarGrid.innerHTML = '';
+
+  try {
+    const data = await getFromGas({
+      action: 'getMonthlySessions',
+      year: year,
+      month: month
+    });
+
+    const sessions = data.sessions || [];
+
+    renderCalendar(year, month, sessions);
+
+    if (sessions.length === 0) {
+      calendarStatus.textContent = 'この月の記録はありません。';
+    } else {
+      calendarStatus.textContent = `${sessions.length}件の記録`;
+    }
+
+  } catch (error) {
+    console.error(error);
+    calendarStatus.textContent = '読み込みに失敗しました: ' + error.message;
+  }
+}
+
+/**
+ * 月曜始まりカレンダー描画
+ */
+function renderCalendar(year, month, sessions) {
+  calendarGrid.innerHTML = '';
+
+  const sessionsByDate = groupSessionsByDate(sessions);
+
+  const firstDate = new Date(year, month - 1, 1);
+  const lastDate = new Date(year, month, 0);
+
+  const firstDayIndex = getMondayStartDayIndex(firstDate);
+  const daysInMonth = lastDate.getDate();
+
+  for (let i = 0; i < firstDayIndex; i += 1) {
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'calendar-day empty';
+    calendarGrid.appendChild(emptyCell);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const dateString = formatCalendarDate(year, month, day);
+    const daySessions = sessionsByDate[dateString] || [];
+
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day';
+
+    if (dateString === getTodayIsoDate()) {
+      cell.classList.add('today');
+    }
+
+    const dayNumber = document.createElement('div');
+    dayNumber.className = 'calendar-day-number';
+    dayNumber.textContent = String(day);
+
+    const badges = document.createElement('div');
+    badges.className = 'calendar-badges';
+
+    const bodyParts = uniqueBodyParts(daySessions);
+
+    bodyParts.forEach((bodyPart) => {
+      const badge = document.createElement('span');
+      badge.className = 'body-badge ' + getBodyPartClass(bodyPart);
+      badge.textContent = getBodyPartShortName(bodyPart);
+      badge.title = bodyPart;
+      badges.appendChild(badge);
+    });
+
+    cell.appendChild(dayNumber);
+    cell.appendChild(badges);
+
+    calendarGrid.appendChild(cell);
+  }
+}
+
+/**
+ * 日付ごとにSessionをまとめる
+ */
+function groupSessionsByDate(sessions) {
+  const grouped = {};
+
+  sessions.forEach((session) => {
+    if (!session.date) {
+      return;
+    }
+
+    if (!grouped[session.date]) {
+      grouped[session.date] = [];
+    }
+
+    grouped[session.date].push(session);
+  });
+
+  return grouped;
+}
+
+/**
+ * 同じ日の部位重複を削除
+ */
+function uniqueBodyParts(sessions) {
+  const seen = {};
+  const result = [];
+
+  sessions.forEach((session) => {
+    const bodyPart = session.bodyPart || '';
+
+    if (!bodyPart) {
+      return;
+    }
+
+    if (seen[bodyPart]) {
+      return;
+    }
+
+    seen[bodyPart] = true;
+    result.push(bodyPart);
+  });
+
+  return result;
+}
+
+/**
+ * 月曜始まり用の曜日index
+ * 月=0, 火=1, ..., 日=6
+ */
+function getMondayStartDayIndex(date) {
+  const day = date.getDay();
+
+  if (day === 0) {
+    return 6;
+  }
+
+  return day - 1;
+}
+
+/**
+ * yyyy-MM-dd 形式にする
+ */
+function formatCalendarDate(year, month, day) {
+  const y = String(year).padStart(4, '0');
+  const m = String(month).padStart(2, '0');
+  const d = String(day).padStart(2, '0');
+
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * 部位の短縮表示
+ */
+function getBodyPartShortName(bodyPart) {
+  const map = {
+    '胸': '胸',
+    '背中': '背',
+    '脚': '脚',
+    '腕': '腕',
+    '肩': '肩',
+    '腹': '腹',
+    '全身': '全'
+  };
+
+  return map[bodyPart] || bodyPart.slice(0, 1);
+}
+
+/**
+ * 部位ごとの色クラス
+ */
+function getBodyPartClass(bodyPart) {
+  const map = {
+    '胸': 'body-chest',
+    '背中': 'body-back',
+    '脚': 'body-legs',
+    '腕': 'body-arms',
+    '肩': 'body-shoulders',
+    '腹': 'body-abs',
+    '全身': 'body-full'
+  };
+
+  return map[bodyPart] || 'body-full';
 }
 
 init();
