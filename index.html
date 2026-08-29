@@ -19,64 +19,122 @@
       </div>
     </header>
 
-    <section class="card">
-      <h2>今日の設定</h2>
-
-      <label class="field">
-        <span>日付</span>
-        <input type="date" id="workoutDate" />
-      </label>
-
-      <label class="field">
-        <span>部位</span>
-        <select id="bodyPart">
-          <option value="">選択してください</option>
-          <option value="胸">胸</option>
-          <option value="背中">背中</option>
-          <option value="脚">脚</option>
-          <option value="腕">腕</option>
-          <option value="肩">肩</option>
-          <option value="腹">腹</option>
-          <option value="全身">全身</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span>全体メモ</span>
-        <textarea id="sessionMemo" rows="2" placeholder="例：体調、混雑、フォーム感覚など"></textarea>
-      </label>
-
-      <button id="loadExercisesButton" class="button primary">
-        種目を読み込む
+    <nav class="tabs" aria-label="画面切り替え">
+      <button type="button" class="tab-button active" data-tab="log">
+        記録
       </button>
+      <button type="button" class="tab-button" data-tab="calendar">
+        カレンダー
+      </button>
+    </nav>
+
+    <section id="logTab" class="tab-panel active">
+      <section class="card">
+        <h2>今日の設定</h2>
+
+        <label class="field">
+          <span>日付</span>
+          <input type="date" id="workoutDate" />
+        </label>
+
+        <label class="field">
+          <span>部位</span>
+          <select id="bodyPart">
+            <option value="">選択してください</option>
+            <option value="胸">胸</option>
+            <option value="背中">背中</option>
+            <option value="脚">脚</option>
+            <option value="腕">腕</option>
+            <option value="肩">肩</option>
+            <option value="腹">腹</option>
+            <option value="全身">全身</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>全体メモ</span>
+          <textarea id="sessionMemo" rows="2" placeholder="例：体調、混雑、フォーム感覚など"></textarea>
+        </label>
+
+        <button id="loadExercisesButton" class="button primary">
+          種目を読み込む
+        </button>
+      </section>
+
+      <section class="card">
+        <h2>今日やる種目を選ぶ</h2>
+
+        <div id="statusMessage" class="status-message">
+          部位を選んで「種目を読み込む」を押してください。
+        </div>
+
+        <div id="exercisePicker" class="exercise-picker"></div>
+
+        <button id="addSelectedExercisesButton" class="button secondary" disabled>
+          選んだ種目を追加
+        </button>
+      </section>
+
+      <section class="card">
+        <h2>今回のトレーニング</h2>
+
+        <div id="exerciseList" class="exercise-list"></div>
+      </section>
+
+      <section class="card submit-card">
+        <button id="submitButton" class="button submit" disabled>
+          Notionに保存
+        </button>
+
+        <div id="submitMessage" class="submit-message"></div>
+      </section>
     </section>
 
-    <section class="card">
-      <h2>今日やる種目を選ぶ</h2>
+    <section id="calendarTab" class="tab-panel">
+      <section class="card calendar-card">
+        <div class="calendar-header">
+          <button type="button" id="prevMonthButton" class="calendar-nav-button">
+            前月
+          </button>
 
-      <div id="statusMessage" class="status-message">
-        部位を選んで「種目を読み込む」を押してください。
-      </div>
+          <div>
+            <h2 id="calendarTitle">カレンダー</h2>
+            <div id="calendarStatus" class="calendar-status">
+              読み込み前
+            </div>
+          </div>
 
-      <div id="exercisePicker" class="exercise-picker"></div>
+          <button type="button" id="nextMonthButton" class="calendar-nav-button">
+            次月
+          </button>
+        </div>
 
-      <button id="addSelectedExercisesButton" class="button secondary" disabled>
-        選んだ種目を追加
-      </button>
-    </section>
+        <button type="button" id="todayMonthButton" class="button calendar-today-button">
+          今月に戻る
+        </button>
 
-    <section class="card">
-      <h2>今回のトレーニング</h2>
+        <div class="calendar-weekdays" aria-hidden="true">
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+          <div>土</div>
+          <div>日</div>
+        </div>
 
-      <div id="exerciseList" class="exercise-list"></div>
-    </section>
+        <div id="calendarGrid" class="calendar-grid"></div>
 
-    <section class="card submit-card">
-      <button id="submitButton" class="button submit" disabled>
-        Notionに保存
-      </button>
-
-      <div id="submitMessage" class="submit-message"></div>
+        <div class="calendar-legend">
+          <span><span class="legend-dot body-chest"></span>胸</span>
+          <span><span class="legend-dot body-back"></span>背</span>
+          <span><span class="legend-dot body-legs"></span>脚</span>
+          <span><span class="legend-dot body-arms"></span>腕</span>
+          <span><span class="legend-dot body-shoulders"></span>肩</span>
+          <span><span class="legend-dot body-abs"></span>腹</span>
+          <span><span class="legend-dot body-full"></span>全</span>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -104,7 +162,7 @@
       </div>
 
       <div class="last-workout">
-        <h4>前回</h4>
+        <h4>直近記録</h4>
         <div class="last-workout-content"></div>
       </div>
 
