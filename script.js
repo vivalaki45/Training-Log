@@ -12,6 +12,7 @@
  * - 月曜始まりの月カレンダー表示
  * - カレンダー内で予定を追加
  * - カレンダーで予定と実績を分けて表示
+ * - カレンダーの日付を押して予定日を選択
  */
 
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
@@ -662,6 +663,27 @@ function togglePlanForm() {
 }
 
 /**
+ * カレンダーの日付を押した時に予定フォームを開く
+ */
+function openPlanFormForDate(dateString) {
+  planDateInput.value = dateString;
+
+  if (planForm.classList.contains('hidden')) {
+    planForm.classList.remove('hidden');
+    togglePlanFormButton.textContent = '予定を閉じる';
+  }
+
+  setPlanMessage('予定日を選択しました。部位を選んで保存してください。', '');
+
+  planBodyPartSelect.focus();
+
+  planForm.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+/**
  * 予定を保存
  */
 async function handleSavePlan() {
@@ -1025,12 +1047,18 @@ function renderCalendar(year, month, sessions) {
     const dateString = formatCalendarDate(year, month, day);
     const daySessions = sessionsByDate[dateString] || [];
 
-    const cell = document.createElement('div');
-    cell.className = 'calendar-day';
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.className = 'calendar-day calendar-day-button';
+    cell.dataset.date = dateString;
 
     if (dateString === getTodayIsoDate()) {
       cell.classList.add('today');
     }
+
+    cell.addEventListener('click', () => {
+      openPlanFormForDate(dateString);
+    });
 
     const dayNumber = document.createElement('div');
     dayNumber.className = 'calendar-day-number';
@@ -1064,10 +1092,28 @@ function renderCalendar(year, month, sessions) {
 }
 
 /**
+ * カレンダーの日付を押した時に予定フォームを開く
+ */
+function openPlanFormForDate(dateString) {
+  planDateInput.value = dateString;
+
+  if (planForm.classList.contains('hidden')) {
+    planForm.classList.remove('hidden');
+    togglePlanFormButton.textContent = '予定を閉じる';
+  }
+
+  setPlanMessage('予定日を選択しました。部位を選んで保存してください。', '');
+
+  planBodyPartSelect.focus();
+
+  planForm.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+/**
  * カレンダーのバッジを作る
- *
- * 同じ日に同じ部位の実績と予定が両方ある場合：
- * - 実績を優先して表示
  */
 function buildCalendarBadgeItems(sessions) {
   const map = {};
