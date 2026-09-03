@@ -10,6 +10,8 @@
  * - ページ再読み込み後に下書きを復元
  * - 今回のトレーニングをNotionに保存
  * - 月曜始まりの月カレンダー表示
+ * - カレンダー内で予定を追加
+ * - カレンダーで予定と実績を分けて表示
  */
 
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
@@ -42,6 +44,14 @@ const calendarTitle = document.getElementById('calendarTitle');
 const calendarStatus = document.getElementById('calendarStatus');
 const calendarGrid = document.getElementById('calendarGrid');
 
+const togglePlanFormButton = document.getElementById('togglePlanFormButton');
+const planForm = document.getElementById('planForm');
+const planDateInput = document.getElementById('planDate');
+const planBodyPartSelect = document.getElementById('planBodyPart');
+const planMemoInput = document.getElementById('planMemo');
+const savePlanButton = document.getElementById('savePlanButton');
+const planMessage = document.getElementById('planMessage');
+
 let loadedExercises = [];
 let currentCalendarDate = new Date();
 let isRestoringDraft = false;
@@ -51,7 +61,10 @@ let draftSaveTimer = null;
  * 初期化
  */
 function init() {
-  workoutDateInput.value = getTodayIsoDate();
+  const today = getTodayIsoDate();
+
+  workoutDateInput.value = today;
+  planDateInput.value = today;
 
   loadExercisesButton.addEventListener('click', handleLoadExercises);
   addSelectedExercisesButton.addEventListener('click', handleAddSelectedExercises);
@@ -85,6 +98,9 @@ function init() {
     currentCalendarDate = new Date();
     loadCalendar();
   });
+
+  togglePlanFormButton.addEventListener('click', togglePlanForm);
+  savePlanButton.addEventListener('click', handleSavePlan);
 
   setupDraftAutoSave();
 
@@ -133,6 +149,18 @@ function setSubmitMessage(message, type) {
 
   if (type) {
     submitMessage.classList.add(type);
+  }
+}
+
+/**
+ * 予定メッセージ表示
+ */
+function setPlanMessage(message, type) {
+  planMessage.textContent = message || '';
+  planMessage.className = 'plan-message';
+
+  if (type) {
+    planMessage.classList.add(type);
   }
 }
 
@@ -615,6 +643,77 @@ async function handleSubmitWorkout() {
 }
 
 /**
+ * 予定フォーム開閉
+ */
+function togglePlanForm() {
+  const isHidden = planForm.classList.contains('hidden');
+
+  planForm.classList.toggle('hidden', !isHidden);
+
+  togglePlanFormButton.textContent = isHidden ? '予定を閉じる' : '予定を追加';
+
+  if (isHidden) {
+    if (!planDateInput.value) {
+      planDateInput.value = getTodayIsoDate();
+    }
+
+    setPlanMessage('', '');
+  }
+}
+
+/**
+ * 予定を保存
+ */
+async function handleSavePlan() {
+  const date = planDateInput.value;
+  const bodyPart = planBodyPartSelect.value;
+  const memo = planMemoInput.value.trim();
+
+  if (!date) {
+    alert('予定日を入力してください。');
+    return;
+  }
+
+  if (!bodyPart) {
+    alert('部位を選択してください。');
+    return;
+  }
+
+  savePlanButton.disabled = true;
+  setPlanMessage('予定を保存中...', '');
+
+  try {
+    const result = await postToGas({
+      action: 'createPlan',
+      date: date,
+      bodyPart: bodyPart,
+      memo: memo
+    });
+
+    console.log(result);
+
+    setPlanMessage('予定を保存しました。', 'success');
+
+    planMemoInput.value = '';
+    planBodyPartSelect.value = '';
+
+    currentCalendarDate = new Date(
+      Number(date.slice(0, 4)),
+      Number(date.slice(5, 7)) - 1,
+      1
+    );
+
+    await loadCalendar();
+
+  } catch (error) {
+    console.error(error);
+    setPlanMessage('予定の保存に失敗しました: ' + error.message, 'error');
+  } finally {
+    savePlanButton.disabled = false;
+  }
+}
+
+/**
  * 下書き自動保存をセットアップ
  */
 function setupDraftAutoSave() {
@@ -888,9 +987,12 @@ async function loadCalendar() {
     renderCalendar(year, month, sessions);
 
     if (sessions.length === 0) {
-      calendarStatus.textContent = 'この月の記録はありません。';
+      calendarStatus.textContent = 'この月の予定・記録はありません。';
     } else {
-      calendarStatus.textContent = `${sessions.length}件の記録`;
+      const actualCount = sessions.filter((session) => getSessionType(session) === 'actual').length;
+      const planCount = sessions.filter((session) => getSessionType(session) === 'plan').length;
+
+      calendarStatus.textContent = `実績 ${actualCount}件 / 予定 ${planCount}件`;
     }
 
   } catch (error) {
@@ -937,13 +1039,20 @@ function renderCalendar(year, month, sessions) {
     const badges = document.createElement('div');
     badges.className = 'calendar-badges';
 
-    const bodyParts = uniqueBodyParts(daySessions);
+    const badgeItems = buildCalendarBadgeItems(daySessions);
 
-    bodyParts.forEach((bodyPart) => {
+    badgeItems.forEach((item) => {
       const badge = document.createElement('span');
-      badge.className = 'body-badge ' + getBodyPartClass(bodyPart);
-      badge.textContent = getBodyPartShortName(bodyPart);
-      badge.title = bodyPart;
+
+      badge.className = [
+        'body-badge',
+        getBodyPartClass(item.bodyPart),
+        item.type
+      ].join(' ');
+
+      badge.textContent = getBodyPartShortName(item.bodyPart);
+      badge.title = `${item.type === 'actual' ? '実績' : '予定'}：${item.bodyPart}`;
+
       badges.appendChild(badge);
     });
 
@@ -952,6 +1061,60 @@ function renderCalendar(year, month, sessions) {
 
     calendarGrid.appendChild(cell);
   }
+}
+
+/**
+ * カレンダーのバッジを作る
+ *
+ * 同じ日に同じ部位の実績と予定が両方ある場合：
+ * - 実績を優先して表示
+ */
+function buildCalendarBadgeItems(sessions) {
+  const map = {};
+
+  sessions.forEach((session) => {
+    const bodyPart = session.bodyPart || '';
+
+    if (!bodyPart) {
+      return;
+    }
+
+    const type = getSessionType(session);
+    const key = bodyPart;
+
+    if (!map[key]) {
+      map[key] = {
+        bodyPart: bodyPart,
+        type: type
+      };
+      return;
+    }
+
+    if (map[key].type === 'plan' && type === 'actual') {
+      map[key].type = 'actual';
+    }
+  });
+
+  return Object.keys(map).map((key) => map[key]);
+}
+
+/**
+ * Session種別
+ */
+function getSessionType(session) {
+  if (session.type === 'actual') {
+    return 'actual';
+  }
+
+  if (session.type === 'plan') {
+    return 'plan';
+  }
+
+  if (session.status === 'Done') {
+    return 'actual';
+  }
+
+  return 'plan';
 }
 
 /**
@@ -973,31 +1136,6 @@ function groupSessionsByDate(sessions) {
   });
 
   return grouped;
-}
-
-/**
- * 同じ日の部位重複を削除
- */
-function uniqueBodyParts(sessions) {
-  const seen = {};
-  const result = [];
-
-  sessions.forEach((session) => {
-    const bodyPart = session.bodyPart || '';
-
-    if (!bodyPart) {
-      return;
-    }
-
-    if (seen[bodyPart]) {
-      return;
-    }
-
-    seen[bodyPart] = true;
-    result.push(bodyPart);
-  });
-
-  return result;
 }
 
 /**
