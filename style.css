@@ -574,6 +574,21 @@ textarea {
   overflow: hidden;
 }
 
+.calendar-day-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.calendar-day-button:active {
+  transform: scale(0.98);
+}
+
 .calendar-day.empty {
   opacity: 0.35;
 }
