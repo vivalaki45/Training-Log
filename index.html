@@ -109,9 +109,49 @@
           </button>
         </div>
 
-        <button type="button" id="todayMonthButton" class="button calendar-today-button">
-          今月に戻る
-        </button>
+        <div class="calendar-actions">
+          <button type="button" id="todayMonthButton" class="button calendar-today-button">
+            今月に戻る
+          </button>
+
+          <button type="button" id="togglePlanFormButton" class="button calendar-plan-toggle-button">
+            予定を追加
+          </button>
+        </div>
+
+        <div id="planForm" class="plan-form hidden">
+          <h3>予定を追加</h3>
+
+          <label class="field">
+            <span>予定日</span>
+            <input type="date" id="planDate" />
+          </label>
+
+          <label class="field">
+            <span>部位</span>
+            <select id="planBodyPart">
+              <option value="">選択してください</option>
+              <option value="胸">胸</option>
+              <option value="背中">背中</option>
+              <option value="脚">脚</option>
+              <option value="腕">腕</option>
+              <option value="肩">肩</option>
+              <option value="腹">腹</option>
+              <option value="全身">全身</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>予定メモ</span>
+            <textarea id="planMemo" rows="2" placeholder="例：胸の日、ベンチ重めなど"></textarea>
+          </label>
+
+          <button type="button" id="savePlanButton" class="button save-plan-button">
+            予定を保存
+          </button>
+
+          <div id="planMessage" class="plan-message"></div>
+        </div>
 
         <div class="calendar-weekdays" aria-hidden="true">
           <div>月</div>
@@ -126,6 +166,11 @@
         <div id="calendarGrid" class="calendar-grid"></div>
 
         <div class="calendar-legend">
+          <span><span class="legend-sample actual-sample"></span>実績</span>
+          <span><span class="legend-sample plan-sample"></span>予定</span>
+        </div>
+
+        <div class="calendar-legend body-legend">
           <span><span class="legend-dot body-chest"></span>胸</span>
           <span><span class="legend-dot body-back"></span>背</span>
           <span><span class="legend-dot body-legs"></span>脚</span>
