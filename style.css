@@ -196,7 +196,9 @@ textarea {
 .button.primary,
 .button.secondary,
 .button.submit,
-.button.calendar-today-button {
+.button.calendar-today-button,
+.button.calendar-plan-toggle-button,
+.button.save-plan-button {
   background: var(--button-gradient-orange);
   color: #ffffff;
   box-shadow: 0 10px 22px rgba(234, 88, 12, 0.18);
@@ -205,7 +207,9 @@ textarea {
 .button.primary:active,
 .button.secondary:active,
 .button.submit:active,
-.button.calendar-today-button:active {
+.button.calendar-today-button:active,
+.button.calendar-plan-toggle-button:active,
+.button.save-plan-button:active {
   background: var(--button-gradient-orange-active);
 }
 
@@ -227,22 +231,26 @@ textarea {
 
 .status-message,
 .submit-message,
-.calendar-status {
+.calendar-status,
+.plan-message {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
   font-weight: 400;
 }
 
-.submit-message {
+.submit-message,
+.plan-message {
   margin-top: 12px;
 }
 
-.submit-message.success {
+.submit-message.success,
+.plan-message.success {
   color: var(--primary-light);
 }
 
-.submit-message.error {
+.submit-message.error,
+.plan-message.error {
   color: var(--danger);
 }
 
@@ -510,8 +518,34 @@ textarea {
   cursor: pointer;
 }
 
-.calendar-today-button {
+.calendar-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-bottom: 14px;
+}
+
+.calendar-today-button,
+.calendar-plan-toggle-button {
+  margin-bottom: 0;
+}
+
+.plan-form {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card-2);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.plan-form.hidden {
+  display: none;
+}
+
+.plan-form h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .calendar-weekdays {
@@ -573,34 +607,81 @@ textarea {
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
+  border: 1px solid transparent;
 }
 
-.body-chest {
+.body-badge.plan {
+  background: transparent;
+}
+
+.body-badge.actual.body-chest,
+.legend-dot.body-chest {
   background: var(--body-chest);
 }
 
-.body-back {
+.body-badge.actual.body-back,
+.legend-dot.body-back {
   background: var(--body-back);
 }
 
-.body-legs {
+.body-badge.actual.body-legs,
+.legend-dot.body-legs {
   background: var(--body-legs);
 }
 
-.body-arms {
+.body-badge.actual.body-arms,
+.legend-dot.body-arms {
   background: var(--body-arms);
 }
 
-.body-shoulders {
+.body-badge.actual.body-shoulders,
+.legend-dot.body-shoulders {
   background: var(--body-shoulders);
 }
 
-.body-abs {
+.body-badge.actual.body-abs,
+.legend-dot.body-abs {
   background: var(--body-abs);
 }
 
-.body-full {
+.body-badge.actual.body-full,
+.legend-dot.body-full {
   background: var(--body-full);
+}
+
+.body-badge.plan.body-chest {
+  border-color: var(--body-chest);
+  color: var(--body-chest);
+}
+
+.body-badge.plan.body-back {
+  border-color: var(--body-back);
+  color: var(--body-back);
+}
+
+.body-badge.plan.body-legs {
+  border-color: var(--body-legs);
+  color: var(--body-legs);
+}
+
+.body-badge.plan.body-arms {
+  border-color: var(--body-arms);
+  color: var(--body-arms);
+}
+
+.body-badge.plan.body-shoulders {
+  border-color: var(--body-shoulders);
+  color: var(--body-shoulders);
+}
+
+.body-badge.plan.body-abs {
+  border-color: var(--body-abs);
+  color: var(--body-abs);
+}
+
+.body-badge.plan.body-full {
+  border-color: var(--body-full);
+  color: var(--body-full);
 }
 
 .calendar-legend {
@@ -618,11 +699,31 @@ textarea {
   gap: 4px;
 }
 
+.body-legend {
+  margin-top: 8px;
+}
+
 .legend-dot {
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 999px;
+}
+
+.legend-sample {
+  display: inline-flex;
+  width: 18px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.actual-sample {
+  background: var(--primary);
+}
+
+.plan-sample {
+  border: 1px solid var(--primary);
+  background: transparent;
 }
 
 @media (max-width: 520px) {
@@ -664,6 +765,10 @@ textarea {
   .remove-set-button {
     grid-column: 3 / 4;
     justify-self: end;
+  }
+
+  .calendar-actions {
+    grid-template-columns: 1fr;
   }
 
   .calendar-day {
