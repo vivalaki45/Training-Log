@@ -1,262 +1,795 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+:root {
+  --bg: #111111;
+  --card: #1c1c1c;
+  --card-2: #242424;
+  --text: #f4f4f4;
+  --text-soft: #d4d4d4;
+  --muted: #a7a7a7;
+  --line: #333333;
 
-  <title>Workout Logger</title>
+  --primary: #ea580c;
+  --primary-dark: #c2410c;
+  --primary-deep: #9a3412;
+  --primary-light: #fb923c;
+  --primary-soft: rgba(234, 88, 12, 0.18);
 
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <main class="app">
-    <header class="app-header">
-      <h1>Workout Logger</h1>
+  --danger: #ff5c5c;
+  --danger-dark: #7f1d1d;
+  --danger-main: #b91c1c;
 
-      <div class="training-rule">
-        <div>前回より、１回でも多く、１kgでも重く</div>
-        <div>10回出来たら次ある重さに</div>
-      </div>
-    </header>
+  --success: #ea580c;
+  --input: #151515;
 
-    <nav class="tabs" aria-label="画面切り替え">
-      <button type="button" class="tab-button active" data-tab="log">
-        記録
-      </button>
-      <button type="button" class="tab-button" data-tab="calendar">
-        カレンダー
-      </button>
-    </nav>
+  --button-gradient-orange: linear-gradient(90deg, #ff8a1f 0%, #f97316 45%, #c2410c 100%);
+  --button-gradient-orange-active: linear-gradient(90deg, #f97316 0%, #ea580c 45%, #9a3412 100%);
 
-    <section id="logTab" class="tab-panel active">
-      <section class="card">
-        <h2>今日の設定</h2>
+  --body-chest: #ef4444;
+  --body-back: #3b82f6;
+  --body-legs: #22c55e;
+  --body-arms: #a855f7;
+  --body-shoulders: #f97316;
+  --body-abs: #eab308;
+  --body-full: #94a3b8;
+}
 
-        <label class="field">
-          <span>日付</span>
-          <input type="date" id="workoutDate" />
-        </label>
+* {
+  box-sizing: border-box;
+}
 
-        <label class="field">
-          <span>部位</span>
-          <select id="bodyPart">
-            <option value="">選択してください</option>
-            <option value="胸">胸</option>
-            <option value="背中">背中</option>
-            <option value="脚">脚</option>
-            <option value="腕">腕</option>
-            <option value="肩">肩</option>
-            <option value="腹">腹</option>
-            <option value="全身">全身</option>
-          </select>
-        </label>
+html {
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    "Hiragino Sans",
+    "Yu Gothic",
+    sans-serif;
+}
 
-        <label class="field">
-          <span>全体メモ</span>
-          <textarea id="sessionMemo" rows="2" placeholder="例：体調、混雑、フォーム感覚など"></textarea>
-        </label>
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
 
-        <button id="loadExercisesButton" class="button primary">
-          種目を読み込む
-        </button>
-      </section>
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
-      <section class="card">
-        <h2>今日やる種目を選ぶ</h2>
+.app {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: 32px;
+}
 
-        <div id="statusMessage" class="status-message">
-          部位を選んで「種目を読み込む」を押してください。
-        </div>
+.app-header {
+  padding: 16px 4px 12px;
+}
 
-        <div id="exercisePicker" class="exercise-picker"></div>
+.app-header h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+}
 
-        <button id="addSelectedExercisesButton" class="button secondary" disabled>
-          選んだ種目を追加
-        </button>
-      </section>
+.training-rule {
+  padding: 4px 0 0;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
 
-      <section class="card">
-        <h2>今回のトレーニング</h2>
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #151515;
+}
 
-        <div id="exerciseList" class="exercise-list"></div>
-      </section>
+.tab-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
 
-      <section class="card submit-card">
-        <button id="submitButton" class="button submit" disabled>
-          Notionに保存
-        </button>
+.tab-button.active {
+  color: #ffffff;
+  background: var(--primary);
+}
 
-        <div id="submitMessage" class="submit-message"></div>
-      </section>
-    </section>
+.tab-panel {
+  display: none;
+}
 
-    <section id="calendarTab" class="tab-panel">
-      <section class="card calendar-card">
-        <div class="calendar-header">
-          <button type="button" id="prevMonthButton" class="calendar-nav-button">
-            前月
-          </button>
+.tab-panel.active {
+  display: block;
+}
 
-          <div>
-            <h2 id="calendarTitle">カレンダー</h2>
-            <div id="calendarStatus" class="calendar-status">
-              読み込み前
-            </div>
-          </div>
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  margin: 14px 0;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+}
 
-          <button type="button" id="nextMonthButton" class="calendar-nav-button">
-            次月
-          </button>
-        </div>
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  font-weight: 700;
+}
 
-        <div class="calendar-actions">
-          <button type="button" id="todayMonthButton" class="button calendar-today-button">
-            今月に戻る
-          </button>
+.field {
+  display: block;
+  margin: 14px 0;
+}
 
-          <button type="button" id="togglePlanFormButton" class="button calendar-plan-toggle-button">
-            予定を追加
-          </button>
-        </div>
+.field span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 500;
+}
 
-        <div id="planForm" class="plan-form hidden">
-          <h3>予定を追加</h3>
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--input);
+  color: var(--text);
+  padding: 12px;
+  outline: none;
+  font-weight: 400;
+}
 
-          <label class="field">
-            <span>予定日</span>
-            <input type="date" id="planDate" />
-          </label>
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
+}
 
-          <label class="field">
-            <span>部位</span>
-            <select id="planBodyPart">
-              <option value="">選択してください</option>
-              <option value="胸">胸</option>
-              <option value="背中">背中</option>
-              <option value="脚">脚</option>
-              <option value="腕">腕</option>
-              <option value="肩">肩</option>
-              <option value="腹">腹</option>
-              <option value="全身">全身</option>
-            </select>
-          </label>
+textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
 
-          <label class="field">
-            <span>予定メモ</span>
-            <textarea id="planMemo" rows="2" placeholder="例：胸の日、ベンチ重めなど"></textarea>
-          </label>
+.button {
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #ffffff;
+  background: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+}
 
-          <button type="button" id="savePlanButton" class="button save-plan-button">
-            予定を保存
-          </button>
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
-          <div id="planMessage" class="plan-message"></div>
-        </div>
+.button.primary,
+.button.secondary,
+.button.submit,
+.button.calendar-today-button,
+.button.calendar-plan-toggle-button,
+.button.save-plan-button {
+  background: var(--button-gradient-orange);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(234, 88, 12, 0.18);
+}
 
-        <div class="calendar-weekdays" aria-hidden="true">
-          <div>月</div>
-          <div>火</div>
-          <div>水</div>
-          <div>木</div>
-          <div>金</div>
-          <div>土</div>
-          <div>日</div>
-        </div>
+.button.primary:active,
+.button.secondary:active,
+.button.submit:active,
+.button.calendar-today-button:active,
+.button.calendar-plan-toggle-button:active,
+.button.save-plan-button:active {
+  background: var(--button-gradient-orange-active);
+}
 
-        <div id="calendarGrid" class="calendar-grid"></div>
+.button.submit {
+  font-size: 17px;
+  font-weight: 700;
+}
 
-        <div class="calendar-legend">
-          <span><span class="legend-sample actual-sample"></span>実績</span>
-          <span><span class="legend-sample plan-sample"></span>予定</span>
-        </div>
+.button.small {
+  width: auto;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: none;
+}
 
-        <div class="calendar-legend body-legend">
-          <span><span class="legend-dot body-chest"></span>胸</span>
-          <span><span class="legend-dot body-back"></span>背</span>
-          <span><span class="legend-dot body-legs"></span>脚</span>
-          <span><span class="legend-dot body-arms"></span>腕</span>
-          <span><span class="legend-dot body-shoulders"></span>肩</span>
-          <span><span class="legend-dot body-abs"></span>腹</span>
-          <span><span class="legend-dot body-full"></span>全</span>
-        </div>
-      </section>
-    </section>
-  </main>
+.status-message,
+.submit-message,
+.calendar-status,
+.plan-message {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+}
 
-  <template id="pickerItemTemplate">
-    <label class="picker-item">
-      <input type="checkbox" class="picker-checkbox" />
-      <span class="picker-name"></span>
-      <span class="picker-category"></span>
-    </label>
-  </template>
+.submit-message,
+.plan-message {
+  margin-top: 12px;
+}
 
-  <template id="exerciseTemplate">
-    <article class="exercise-card">
-      <div class="exercise-header">
-        <div>
-          <h3 class="exercise-name"></h3>
-          <p class="exercise-category"></p>
-        </div>
+.submit-message.success,
+.plan-message.success {
+  color: var(--primary-light);
+}
 
-        <div class="exercise-actions">
-          <button type="button" class="move-up-button">↑</button>
-          <button type="button" class="move-down-button">↓</button>
-          <button type="button" class="remove-exercise-button">削除</button>
-        </div>
-      </div>
+.submit-message.error,
+.plan-message.error {
+  color: var(--danger);
+}
 
-      <div class="last-workout">
-        <h4>直近記録</h4>
-        <div class="last-workout-content"></div>
-      </div>
+.exercise-picker {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
 
-      <div class="current-workout">
-        <h4>今回</h4>
+.picker-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
 
-        <div class="sets-container"></div>
+.picker-item input {
+  width: auto;
+}
 
-        <button type="button" class="button small add-set-button">
-          セット追加
-        </button>
-      </div>
+.picker-name {
+  font-weight: 600;
+}
 
-      <label class="field">
-        <span>種目メモ</span>
-        <textarea class="exercise-memo" rows="2" placeholder="フォーム、違和感、次回メモなど"></textarea>
-      </label>
-    </article>
-  </template>
+.picker-category {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
 
-  <template id="setTemplate">
-    <div class="set-row">
-      <div class="set-number"></div>
+.exercise-list {
+  display: grid;
+  gap: 14px;
+}
 
-      <label>
-        <span>kg</span>
-        <input type="number" class="set-weight" inputmode="decimal" step="0.5" min="0" />
-      </label>
+.exercise-card {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+}
 
-      <label>
-        <span>回</span>
-        <input type="number" class="set-reps" inputmode="numeric" step="1" min="0" />
-      </label>
+.exercise-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
 
-      <div class="result-toggle" role="group" aria-label="成功失敗">
-        <button type="button" class="result-button success active" data-success="true">
-          GOOD
-        </button>
-        <button type="button" class="result-button fail" data-success="false">
-          FAIL
-        </button>
-      </div>
+.exercise-name {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 700;
+}
 
-      <button type="button" class="remove-set-button" aria-label="セット削除">
-        ×
-      </button>
-    </div>
-  </template>
+.exercise-category {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
 
-  <script src="script.js"></script>
-</body>
-</html>
+.exercise-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.exercise-actions button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--input);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exercise-actions .remove-exercise-button {
+  color: var(--danger);
+}
+
+.last-workout,
+.current-workout {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.last-workout h4,
+.current-workout h4 {
+  margin: 0 0 8px;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.last-workout-content {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+.last-workout-empty {
+  color: var(--muted);
+}
+
+.last-set-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 3px 0;
+}
+
+.last-set-label {
+  color: var(--muted);
+}
+
+.last-set-fail {
+  color: var(--danger);
+}
+
+.sets-container {
+  display: grid;
+  gap: 10px;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 1fr 96px 32px;
+  gap: 8px;
+  align-items: end;
+  background: var(--input);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.set-number {
+  color: var(--muted);
+  font-weight: 600;
+  padding-bottom: 12px;
+  text-align: center;
+}
+
+.set-row label span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.set-row input[type="number"] {
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.result-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  align-self: end;
+  height: 42px;
+  background: transparent;
+}
+
+.result-button {
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #111111;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.12s ease;
+}
+
+.result-button:active {
+  transform: scale(0.97);
+}
+
+.result-button.success.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.result-button.fail.active {
+  border-color: var(--danger-main);
+  background: var(--danger-main);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.remove-set-button {
+  width: 32px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 92, 92, 0.15);
+  color: var(--danger);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-set-button {
+  margin-top: 10px;
+}
+
+.submit-card {
+  position: static;
+  border-radius: 18px;
+  margin-bottom: 0;
+}
+
+.calendar-card {
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-header h2 {
+  margin: 0;
+  text-align: center;
+}
+
+.calendar-status {
+  text-align: center;
+  margin-top: 2px;
+}
+
+.calendar-nav-button {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--input);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.calendar-today-button,
+.calendar-plan-toggle-button {
+  margin-bottom: 0;
+}
+
+.plan-form {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card-2);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.plan-form.hidden {
+  display: none;
+}
+
+.plan-form h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day {
+  min-height: 72px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--input);
+  padding: 6px;
+  overflow: hidden;
+}
+
+.calendar-day.empty {
+  opacity: 0.35;
+}
+
+.calendar-day.today {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-soft);
+}
+
+.calendar-day-number {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.calendar-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.body-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.body-badge.plan {
+  background: transparent;
+}
+
+.body-badge.actual.body-chest,
+.legend-dot.body-chest {
+  background: var(--body-chest);
+}
+
+.body-badge.actual.body-back,
+.legend-dot.body-back {
+  background: var(--body-back);
+}
+
+.body-badge.actual.body-legs,
+.legend-dot.body-legs {
+  background: var(--body-legs);
+}
+
+.body-badge.actual.body-arms,
+.legend-dot.body-arms {
+  background: var(--body-arms);
+}
+
+.body-badge.actual.body-shoulders,
+.legend-dot.body-shoulders {
+  background: var(--body-shoulders);
+}
+
+.body-badge.actual.body-abs,
+.legend-dot.body-abs {
+  background: var(--body-abs);
+}
+
+.body-badge.actual.body-full,
+.legend-dot.body-full {
+  background: var(--body-full);
+}
+
+.body-badge.plan.body-chest {
+  border-color: var(--body-chest);
+  color: var(--body-chest);
+}
+
+.body-badge.plan.body-back {
+  border-color: var(--body-back);
+  color: var(--body-back);
+}
+
+.body-badge.plan.body-legs {
+  border-color: var(--body-legs);
+  color: var(--body-legs);
+}
+
+.body-badge.plan.body-arms {
+  border-color: var(--body-arms);
+  color: var(--body-arms);
+}
+
+.body-badge.plan.body-shoulders {
+  border-color: var(--body-shoulders);
+  color: var(--body-shoulders);
+}
+
+.body-badge.plan.body-abs {
+  border-color: var(--body-abs);
+  color: var(--body-abs);
+}
+
+.body-badge.plan.body-full {
+  border-color: var(--body-full);
+  color: var(--body-full);
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.body-legend {
+  margin-top: 8px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.legend-sample {
+  display: inline-flex;
+  width: 18px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.actual-sample {
+  background: var(--primary);
+}
+
+.plan-sample {
+  border: 1px solid var(--primary);
+  background: transparent;
+}
+
+@media (max-width: 520px) {
+  .app {
+    padding: 12px;
+    padding-bottom: 32px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .exercise-header {
+    flex-direction: column;
+  }
+
+  .exercise-actions {
+    justify-content: flex-start;
+  }
+
+  .picker-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .picker-category {
+    grid-column: 2 / 3;
+  }
+
+  .set-row {
+    grid-template-columns: 30px 1fr 1fr;
+  }
+
+  .result-toggle {
+    grid-column: 2 / 4;
+    width: 100%;
+  }
+
+  .remove-set-button {
+    grid-column: 3 / 4;
+    justify-self: end;
+  }
+
+  .calendar-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-day {
+    min-height: 58px;
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  .calendar-day-number {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .body-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+
+  .calendar-nav-button {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+}
