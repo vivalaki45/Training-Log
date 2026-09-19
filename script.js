@@ -1,131 +1,53 @@
-/**
- * Workout Logger - GitHub Pages script.js
- *
- * 機能：
- * - 記録 / カレンダーのタブ切り替え
- * - 部位別の種目読み込み
- * - 種目ごとの直近記録表示
- * - 数値入力欄をタップしたら全選択
- * - 入力途中データの自動下書き保存
- * - ページ再読み込み後の下書き復元
- * - Notionへのトレーニング保存
- * - 保存成功後の入力内容・下書き削除
- * - 月曜始まりの月カレンダー表示
- * - カレンダー内で予定を追加
- * - 予定と実績を分けて表示
- * - カレンダーの日付を押して予定日を選択
- */
-
 const GAS_WEB_APP_URL =
   'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
 
 const DRAFT_STORAGE_KEY = 'workoutLoggerDraftV1';
 
-/* =========================
-   記録画面
-========================= */
+const $ = (id) => document.getElementById(id);
 
-const workoutDateInput = document.getElementById('workoutDate');
-const bodyPartSelect = document.getElementById('bodyPart');
-const sessionMemoInput = document.getElementById('sessionMemo');
+const workoutDateInput = $('workoutDate');
+const bodyPartSelect = $('bodyPart');
+const sessionMemoInput = $('sessionMemo');
 
-const loadExercisesButton =
-  document.getElementById('loadExercisesButton');
-
+const loadExercisesButton = $('loadExercisesButton');
 const addSelectedExercisesButton =
-  document.getElementById('addSelectedExercisesButton');
+  $('addSelectedExercisesButton');
 
-const exercisePicker =
-  document.getElementById('exercisePicker');
+const exercisePicker = $('exercisePicker');
+const exerciseList = $('exerciseList');
+const statusMessage = $('statusMessage');
 
-const exerciseList =
-  document.getElementById('exerciseList');
+const submitButton = $('submitButton');
+const submitMessage = $('submitMessage');
 
-const statusMessage =
-  document.getElementById('statusMessage');
-
-const submitButton =
-  document.getElementById('submitButton');
-
-const submitMessage =
-  document.getElementById('submitMessage');
-
-/* =========================
-   テンプレート
-========================= */
-
-const pickerItemTemplate =
-  document.getElementById('pickerItemTemplate');
-
-const exerciseTemplate =
-  document.getElementById('exerciseTemplate');
-
-const setTemplate =
-  document.getElementById('setTemplate');
-
-/* =========================
-   タブ
-========================= */
+const pickerItemTemplate = $('pickerItemTemplate');
+const exerciseTemplate = $('exerciseTemplate');
+const setTemplate = $('setTemplate');
+const subsetTemplate = $('subsetTemplate');
 
 const tabButtons =
   document.querySelectorAll('.tab-button');
 
-const logTab =
-  document.getElementById('logTab');
+const logTab = $('logTab');
+const calendarTab = $('calendarTab');
 
-const calendarTab =
-  document.getElementById('calendarTab');
+const prevMonthButton = $('prevMonthButton');
+const nextMonthButton = $('nextMonthButton');
+const todayMonthButton = $('todayMonthButton');
 
-/* =========================
-   カレンダー
-========================= */
-
-const prevMonthButton =
-  document.getElementById('prevMonthButton');
-
-const nextMonthButton =
-  document.getElementById('nextMonthButton');
-
-const todayMonthButton =
-  document.getElementById('todayMonthButton');
-
-const calendarTitle =
-  document.getElementById('calendarTitle');
-
-const calendarStatus =
-  document.getElementById('calendarStatus');
-
-const calendarGrid =
-  document.getElementById('calendarGrid');
-
-/* =========================
-   予定フォーム
-========================= */
+const calendarTitle = $('calendarTitle');
+const calendarStatus = $('calendarStatus');
+const calendarGrid = $('calendarGrid');
 
 const togglePlanFormButton =
-  document.getElementById('togglePlanFormButton');
+  $('togglePlanFormButton');
 
-const planForm =
-  document.getElementById('planForm');
-
-const planDateInput =
-  document.getElementById('planDate');
-
-const planBodyPartSelect =
-  document.getElementById('planBodyPart');
-
-const planMemoInput =
-  document.getElementById('planMemo');
-
-const savePlanButton =
-  document.getElementById('savePlanButton');
-
-const planMessage =
-  document.getElementById('planMessage');
-
-/* =========================
-   状態
-========================= */
+const planForm = $('planForm');
+const planDateInput = $('planDate');
+const planBodyPartSelect = $('planBodyPart');
+const planMemoInput = $('planMemo');
+const savePlanButton = $('savePlanButton');
+const planMessage = $('planMessage');
 
 let loadedExercises = [];
 let currentCalendarDate = new Date();
@@ -205,7 +127,7 @@ function init() {
 }
 
 /* =========================
-   タブ切り替え
+   タブ
 ========================= */
 
 function switchTab(tabName) {
@@ -232,7 +154,7 @@ function switchTab(tabName) {
 }
 
 /* =========================
-   共通処理
+   共通
 ========================= */
 
 function getTodayIsoDate() {
@@ -246,25 +168,20 @@ function getTodayIsoDate() {
   return localDate.toISOString().slice(0, 10);
 }
 
-function setStatus(message) {
-  statusMessage.textContent = message || '';
+function setStatus(text) {
+  statusMessage.textContent = text || '';
 }
 
-function setSubmitMessage(message, type) {
-  submitMessage.textContent = message || '';
-  submitMessage.className = 'submit-message';
+function setMessage(element, text, type) {
+  element.textContent = text || '';
+
+  element.className =
+    element === submitMessage
+      ? 'submit-message'
+      : 'plan-message';
 
   if (type) {
-    submitMessage.classList.add(type);
-  }
-}
-
-function setPlanMessage(message, type) {
-  planMessage.textContent = message || '';
-  planMessage.className = 'plan-message';
-
-  if (type) {
-    planMessage.classList.add(type);
+    element.classList.add(type);
   }
 }
 
@@ -275,15 +192,15 @@ function setPlanMessage(message, type) {
 async function getFromGas(params) {
   const url = new URL(GAS_WEB_APP_URL);
 
-  Object.keys(params).forEach((key) => {
-    url.searchParams.set(key, params[key]);
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
   });
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(
-      `通信エラーが発生しました。HTTP ${response.status}`
+      `通信エラー HTTP ${response.status}`
     );
   }
 
@@ -304,7 +221,8 @@ async function postToGas(payload) {
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
+        'Content-Type':
+          'text/plain;charset=utf-8'
       },
       body: JSON.stringify(payload)
     }
@@ -312,7 +230,7 @@ async function postToGas(payload) {
 
   if (!response.ok) {
     throw new Error(
-      `通信エラーが発生しました。HTTP ${response.status}`
+      `通信エラー HTTP ${response.status}`
     );
   }
 
@@ -340,7 +258,7 @@ async function handleLoadExercises() {
   }
 
   setStatus('種目を読み込み中...');
-  setSubmitMessage('', '');
+  setMessage(submitMessage, '', '');
 
   exercisePicker.innerHTML = '';
   exerciseList.innerHTML = '';
@@ -362,29 +280,26 @@ async function handleLoadExercises() {
       setStatus(
         'この部位に登録されている種目がありません。'
       );
-
-      saveDraftDebounced();
       return;
     }
 
     renderExercisePicker(loadedExercises);
 
     setStatus(
-      `${bodyPart}の種目を読み込みました。今日やる種目を選んでください。`
+      `${bodyPart}の種目を読み込みました。` +
+      '今日やる種目を選んでください。'
     );
 
     addSelectedExercisesButton.disabled = false;
-
     saveDraftDebounced();
 
   } catch (error) {
     console.error(error);
 
     setStatus(
-      '読み込みに失敗しました: ' + error.message
+      '読み込みに失敗しました: ' +
+      error.message
     );
-
-    saveDraftDebounced();
   }
 }
 
@@ -405,18 +320,16 @@ function renderExercisePicker(exercises) {
     const checkbox =
       node.querySelector('.picker-checkbox');
 
-    const name =
-      node.querySelector('.picker-name');
-
-    const category =
-      node.querySelector('.picker-category');
-
     item.dataset.exerciseId = exercise.id;
     checkbox.value = exercise.id;
 
-    name.textContent = exercise.name;
+    node.querySelector(
+      '.picker-name'
+    ).textContent = exercise.name;
 
-    category.textContent = [
+    node.querySelector(
+      '.picker-category'
+    ).textContent = [
       exercise.bodyPart,
       exercise.category
     ]
@@ -433,9 +346,10 @@ function renderExercisePicker(exercises) {
 }
 
 function handleAddSelectedExercises() {
-  const checked = exercisePicker.querySelectorAll(
-    '.picker-checkbox:checked'
-  );
+  const checked =
+    exercisePicker.querySelectorAll(
+      '.picker-checkbox:checked'
+    );
 
   if (checked.length === 0) {
     alert('今日やる種目を選んでください。');
@@ -443,26 +357,24 @@ function handleAddSelectedExercises() {
   }
 
   checked.forEach((checkbox) => {
-    const exerciseId = checkbox.value;
+    const exercise =
+      loadedExercises.find(
+        (item) =>
+          item.id === checkbox.value
+      );
 
-    const exercise = loadedExercises.find(
-      (item) => item.id === exerciseId
-    );
-
-    if (!exercise) {
-      return;
+    if (
+      exercise &&
+      !isExerciseAlreadyAdded(exercise.id)
+    ) {
+      renderExerciseCard(exercise);
     }
-
-    if (isExerciseAlreadyAdded(exercise.id)) {
-      return;
-    }
-
-    renderExerciseCard(exercise);
   });
 
   submitButton.disabled =
-    exerciseList.querySelectorAll('.exercise-card')
-      .length === 0;
+    !exerciseList.querySelector(
+      '.exercise-card'
+    );
 
   saveDraftDebounced();
 }
@@ -489,161 +401,132 @@ function renderExerciseCard(
   const card =
     node.querySelector('.exercise-card');
 
-  const exerciseName =
-    node.querySelector('.exercise-name');
-
-  const exerciseCategory =
-    node.querySelector('.exercise-category');
-
-  const lastWorkoutContent =
-    node.querySelector('.last-workout-content');
-
   const setsContainer =
     node.querySelector('.sets-container');
-
-  const addSetButton =
-    node.querySelector('.add-set-button');
-
-  const moveUpButton =
-    node.querySelector('.move-up-button');
-
-  const moveDownButton =
-    node.querySelector('.move-down-button');
-
-  const removeExerciseButton =
-    node.querySelector('.remove-exercise-button');
-
-  const exerciseMemoInput =
-    node.querySelector('.exercise-memo');
 
   card.dataset.exerciseId = exercise.id;
   card.dataset.exerciseName = exercise.name;
 
-  exerciseName.textContent = exercise.name;
+  node.querySelector(
+    '.exercise-name'
+  ).textContent = exercise.name;
 
-  exerciseCategory.textContent = [
+  node.querySelector(
+    '.exercise-category'
+  ).textContent = [
     exercise.bodyPart,
     exercise.category
   ]
     .filter(Boolean)
     .join(' / ');
 
-  lastWorkoutContent.innerHTML =
-    renderLastWorkoutHtml(exercise.lastWorkout);
+  node.querySelector(
+    '.last-workout-content'
+  ).innerHTML =
+    renderLastWorkoutHtml(
+      exercise.lastWorkout
+    );
 
-  if (
-    savedExerciseData &&
-    savedExerciseData.memo
-  ) {
-    exerciseMemoInput.value =
-      savedExerciseData.memo;
-  }
+  const memoInput =
+    node.querySelector('.exercise-memo');
 
-  const savedSets =
-    savedExerciseData &&
-    Array.isArray(savedExerciseData.sets)
+  memoInput.value =
+    savedExerciseData?.memo || '';
+
+  memoInput.addEventListener(
+    'input',
+    saveDraftDebounced
+  );
+
+  const initialSets =
+    savedExerciseData?.sets?.length
       ? savedExerciseData.sets
-      : null;
+      : groupPreviousSets(
+          exercise.lastWorkout
+        );
 
-  if (savedSets && savedSets.length > 0) {
-    savedSets.forEach((set) => {
-      addSetRow(setsContainer, {
-        weight: set.weight,
-        reps: set.reps,
-        success: set.success
-      });
+  if (initialSets.length > 0) {
+    initialSets.forEach((set) => {
+      addSetBlock(
+        setsContainer,
+        set
+      );
     });
 
   } else {
-    const previousSets =
-      getPreviousSetsForInitialInput(
-        exercise.lastWorkout
+    for (let index = 0; index < 3; index += 1) {
+      addSetBlock(
+        setsContainer,
+        {
+          weight: '',
+          reps: '',
+          success: true,
+          subsets: []
+        }
       );
-
-    if (previousSets.length > 0) {
-      previousSets.forEach((set) => {
-        addSetRow(setsContainer, {
-          weight: set.weight,
-          reps: set.reps,
-          success: set.success
-        });
-      });
-
-    } else {
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
-
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
-
-      addSetRow(setsContainer, {
-        weight: '',
-        reps: '',
-        success: true
-      });
     }
   }
 
-  addSetButton.addEventListener('click', () => {
-    addSetRow(setsContainer, {
-      weight: '',
-      reps: '',
-      success: true
-    });
+  node.querySelector(
+    '.add-set-button'
+  ).addEventListener('click', () => {
+    addSetBlock(
+      setsContainer,
+      {
+        weight: '',
+        reps: '',
+        success: true,
+        subsets: []
+      }
+    );
 
     saveDraftDebounced();
   });
 
-  moveUpButton.addEventListener('click', () => {
-    const previous = card.previousElementSibling;
+  node.querySelector(
+    '.move-up-button'
+  ).addEventListener('click', () => {
+    const previous =
+      card.previousElementSibling;
 
     if (previous) {
       exerciseList.insertBefore(
         card,
         previous
       );
-
-      saveDraftDebounced();
     }
+
+    saveDraftDebounced();
   });
 
-  moveDownButton.addEventListener('click', () => {
-    const next = card.nextElementSibling;
+  node.querySelector(
+    '.move-down-button'
+  ).addEventListener('click', () => {
+    const next =
+      card.nextElementSibling;
 
     if (next) {
       exerciseList.insertBefore(
         next,
         card
       );
-
-      saveDraftDebounced();
     }
+
+    saveDraftDebounced();
   });
 
-  removeExerciseButton.addEventListener(
-    'click',
-    () => {
-      card.remove();
+  node.querySelector(
+    '.remove-exercise-button'
+  ).addEventListener('click', () => {
+    card.remove();
 
-      submitButton.disabled =
-        exerciseList.querySelectorAll(
-          '.exercise-card'
-        ).length === 0;
+    submitButton.disabled =
+      !exerciseList.querySelector(
+        '.exercise-card'
+      );
 
-      saveDraftDebounced();
-    }
-  );
-
-  exerciseMemoInput.addEventListener(
-    'input',
-    saveDraftDebounced
-  );
+    saveDraftDebounced();
+  });
 
   exerciseList.appendChild(node);
 }
@@ -658,35 +541,40 @@ function renderLastWorkoutHtml(lastWorkout) {
     !Array.isArray(lastWorkout.sets) ||
     lastWorkout.sets.length === 0
   ) {
-    return `
-      <div class="last-workout-empty">
-        直近記録なし
-      </div>
-    `;
+    return (
+      '<div class="last-workout-empty">' +
+      '直近記録なし' +
+      '</div>'
+    );
   }
-
-  const date = lastWorkout.lastDate || '';
 
   const lines = lastWorkout.sets
     .map((set) => {
-      const setNo = set.setNo || '';
-      const weight = set.weight ?? '';
-      const reps = set.reps ?? '';
-      const success = set.success !== false;
+      const downSet = isDownSet(set);
 
-      const failClass =
-        success ? '' : ' last-set-fail';
+      const label = downSet
+        ? `${formatSetNo(set.setNo)} ダウン`
+        : `${set.setNo}set`;
 
       const mark =
-        success ? 'GOOD' : 'FAIL';
+        set.success === false
+          ? 'FAIL'
+          : 'GOOD';
+
+      const failClass =
+        set.success === false
+          ? ' last-set-fail'
+          : '';
 
       return `
         <div class="last-set-line${failClass}">
           <span class="last-set-label">
-            ${setNo}set:
+            ${label}:
           </span>
           <span>
-            ${weight}kg × ${reps}回 ${mark}
+            ${set.weight ?? ''}kg ×
+            ${set.reps ?? ''}回
+            ${mark}
           </span>
         </div>
       `;
@@ -695,15 +583,34 @@ function renderLastWorkoutHtml(lastWorkout) {
 
   return `
     <div class="last-workout-date">
-      日付：${date}
+      日付：${lastWorkout.lastDate || ''}
     </div>
     ${lines}
   `;
 }
 
-function getPreviousSetsForInitialInput(
-  lastWorkout
-) {
+function isDownSet(set) {
+  return (
+    !Number.isInteger(
+      Number(set.setNo)
+    ) ||
+    String(set.memo || '')
+      .includes('【ダウンセット】')
+  );
+}
+
+function formatSetNo(setNo) {
+  const number = Number(setNo);
+  const parent = Math.floor(number);
+
+  const child = Math.round(
+    (number - parent) * 10
+  );
+
+  return `${parent}-${child || 1}`;
+}
+
+function groupPreviousSets(lastWorkout) {
   if (
     !lastWorkout ||
     !Array.isArray(lastWorkout.sets)
@@ -711,22 +618,72 @@ function getPreviousSetsForInitialInput(
     return [];
   }
 
-  return lastWorkout.sets.map((set) => {
-    return {
-      weight: set.weight ?? '',
-      reps: set.reps ?? '',
-      success: set.success !== false
-    };
+  const normalSets = [];
+  const setMap = {};
+
+  lastWorkout.sets.forEach((set) => {
+    const setNumber =
+      Number(set.setNo) || 1;
+
+    const parentNumber =
+      Math.floor(setNumber);
+
+    const childNumber =
+      Math.round(
+        (setNumber - parentNumber) * 10
+      );
+
+    if (
+      childNumber > 0 ||
+      isDownSet(set)
+    ) {
+      if (!setMap[parentNumber]) {
+        const emptyParent = {
+          weight: '',
+          reps: '',
+          success: true,
+          subsets: []
+        };
+
+        normalSets.push(emptyParent);
+        setMap[parentNumber] = emptyParent;
+      }
+
+      setMap[parentNumber].subsets.push({
+        weight: set.weight ?? '',
+        reps: set.reps ?? ''
+      });
+
+    } else {
+      const parentSet = {
+        weight: set.weight ?? '',
+        reps: set.reps ?? '',
+        success:
+          set.success !== false,
+        subsets: []
+      };
+
+      normalSets.push(parentSet);
+      setMap[parentNumber] = parentSet;
+    }
   });
+
+  return normalSets;
 }
 
 /* =========================
-   セット行
+   通常セット
 ========================= */
 
-function addSetRow(container, initialValue) {
+function addSetBlock(
+  container,
+  initialValue = {}
+) {
   const node =
     setTemplate.content.cloneNode(true);
+
+  const block =
+    node.querySelector('.set-block');
 
   const row =
     node.querySelector('.set-row');
@@ -737,11 +694,10 @@ function addSetRow(container, initialValue) {
   const repsInput =
     node.querySelector('.set-reps');
 
-  const removeButton =
-    node.querySelector('.remove-set-button');
-
-  const resultButtons =
-    node.querySelectorAll('.result-button');
+  const subsetsContainer =
+    node.querySelector(
+      '.subsets-container'
+    );
 
   weightInput.value =
     initialValue.weight ?? '';
@@ -754,39 +710,142 @@ function addSetRow(container, initialValue) {
       ? 'false'
       : 'true';
 
-  enableSelectAllOnFocus(weightInput);
-  enableSelectAllOnFocus(repsInput);
+  [weightInput, repsInput]
+    .forEach((input) => {
+      enableSelectAllOnFocus(input);
 
-  weightInput.addEventListener(
-    'input',
-    saveDraftDebounced
-  );
-
-  repsInput.addEventListener(
-    'input',
-    saveDraftDebounced
-  );
+      input.addEventListener(
+        'input',
+        saveDraftDebounced
+      );
+    });
 
   updateResultButtons(row);
 
-  resultButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      row.dataset.success =
-        button.dataset.success;
+  node.querySelectorAll(
+    '.result-button'
+  ).forEach((button) => {
+    button.addEventListener(
+      'click',
+      () => {
+        row.dataset.success =
+          button.dataset.success;
 
-      updateResultButtons(row);
-      saveDraftDebounced();
-    });
+        updateResultButtons(row);
+        saveDraftDebounced();
+      }
+    );
   });
 
-  removeButton.addEventListener('click', () => {
-    row.remove();
+  node.querySelector(
+    '.remove-set-button'
+  ).addEventListener('click', () => {
+    block.remove();
     refreshSetNumbers(container);
     saveDraftDebounced();
   });
 
+  node.querySelector(
+    '.add-subset-button'
+  ).addEventListener('click', () => {
+    addSubsetRow(
+      subsetsContainer,
+      {}
+    );
+
+    saveDraftDebounced();
+  });
+
+  const savedSubsets =
+    Array.isArray(initialValue.subsets)
+      ? initialValue.subsets
+      : [];
+
+  savedSubsets.forEach((subset) => {
+    addSubsetRow(
+      subsetsContainer,
+      subset
+    );
+  });
+
   container.appendChild(node);
   refreshSetNumbers(container);
+}
+
+/* =========================
+   ダウンセット
+========================= */
+
+function addSubsetRow(
+  container,
+  initialValue = {}
+) {
+  const node =
+    subsetTemplate.content.cloneNode(true);
+
+  const row =
+    node.querySelector('.subset-row');
+
+  const weightInput =
+    node.querySelector('.subset-weight');
+
+  const repsInput =
+    node.querySelector('.subset-reps');
+
+  weightInput.value =
+    initialValue.weight ?? '';
+
+  repsInput.value =
+    initialValue.reps ?? '';
+
+  [weightInput, repsInput]
+    .forEach((input) => {
+      enableSelectAllOnFocus(input);
+
+      input.addEventListener(
+        'input',
+        saveDraftDebounced
+      );
+    });
+
+  node.querySelector(
+    '.remove-subset-button'
+  ).addEventListener('click', () => {
+    row.remove();
+    refreshSubsetNumbers(container);
+    saveDraftDebounced();
+  });
+
+  container.appendChild(node);
+  refreshSubsetNumbers(container);
+}
+
+function refreshSetNumbers(container) {
+  const blocks =
+    container.querySelectorAll(
+      ':scope > .set-block'
+    );
+
+  blocks.forEach((block, index) => {
+    block.querySelector(
+      '.set-number'
+    ).textContent =
+      String(index + 1);
+  });
+}
+
+function refreshSubsetNumbers(container) {
+  const rows =
+    container.querySelectorAll(
+      ':scope > .subset-row'
+    );
+
+  rows.forEach((row, index) => {
+    row.querySelector(
+      '.subset-number'
+    ).textContent =
+      `${index + 1}段目`;
+  });
 }
 
 function enableSelectAllOnFocus(input) {
@@ -803,61 +862,42 @@ function enableSelectAllOnFocus(input) {
     }
   );
 
-  input.addEventListener('touchend', () => {
-    setTimeout(() => {
-      input.select();
-    }, 0);
-  });
+  input.addEventListener(
+    'touchend',
+    () => {
+      setTimeout(() => {
+        input.select();
+      }, 0);
+    }
+  );
 }
 
 function updateResultButtons(row) {
   const success =
     row.dataset.success !== 'false';
 
-  const successButton =
-    row.querySelector(
-      '.result-button.success'
-    );
-
-  const failButton =
-    row.querySelector(
-      '.result-button.fail'
-    );
-
-  successButton.classList.toggle(
+  row.querySelector(
+    '.result-button.success'
+  ).classList.toggle(
     'active',
     success
   );
 
-  failButton.classList.toggle(
+  row.querySelector(
+    '.result-button.fail'
+  ).classList.toggle(
     'active',
     !success
   );
 }
 
-function refreshSetNumbers(container) {
-  const rows =
-    container.querySelectorAll('.set-row');
-
-  rows.forEach((row, index) => {
-    const setNumber =
-      row.querySelector('.set-number');
-
-    setNumber.textContent =
-      String(index + 1);
-  });
-}
-
 /* =========================
-   Notion保存用データ
+   保存データ収集
 ========================= */
 
 function collectWorkoutPayload() {
   const date = workoutDateInput.value;
   const bodyPart = bodyPartSelect.value;
-
-  const memo =
-    sessionMemoInput.value.trim();
 
   if (!date) {
     throw new Error(
@@ -871,76 +911,101 @@ function collectWorkoutPayload() {
     );
   }
 
-  const sessionName =
-    `${date.replaceAll('-', '/')} ${bodyPart}`;
-
   const sets = [];
 
-  const cards =
-    exerciseList.querySelectorAll(
-      '.exercise-card'
-    );
-
-  cards.forEach((card) => {
-    const exerciseId =
-      card.dataset.exerciseId;
-
-    const exerciseName =
-      card.dataset.exerciseName;
-
+  exerciseList.querySelectorAll(
+    '.exercise-card'
+  ).forEach((card) => {
     const exerciseMemo =
-      card
-        .querySelector('.exercise-memo')
-        .value
-        .trim();
+      card.querySelector(
+        '.exercise-memo'
+      ).value.trim();
 
-    const rows =
-      card.querySelectorAll('.set-row');
+    const setBlocks =
+      card.querySelectorAll(
+        '.sets-container > .set-block'
+      );
 
-    rows.forEach((row, index) => {
-      const weightValue =
-        row.querySelector('.set-weight').value;
+    setBlocks.forEach(
+      (block, index) => {
+        const parentSetNo = index + 1;
 
-      const repsValue =
-        row.querySelector('.set-reps').value;
+        const normalSet = readInputPair(
+          block.querySelector(
+            '.set-weight'
+          ),
+          block.querySelector(
+            '.set-reps'
+          )
+        );
 
-      const success =
-        row.dataset.success !== 'false';
+        if (normalSet) {
+          sets.push({
+            exerciseId:
+              card.dataset.exerciseId,
 
-      if (
-        weightValue === '' &&
-        repsValue === ''
-      ) {
-        return;
+            exerciseName:
+              card.dataset.exerciseName,
+
+            setNo: parentSetNo,
+
+            weight:
+              normalSet.weight,
+
+            reps:
+              normalSet.reps,
+
+            success:
+              block.querySelector(
+                '.set-row'
+              ).dataset.success !== 'false',
+
+            memo: exerciseMemo
+          });
+        }
+
+        const subsets =
+          block.querySelectorAll(
+            '.subset-row'
+          );
+
+        subsets.forEach(
+          (subset, subsetIndex) => {
+            const pair = readInputPair(
+              subset.querySelector(
+                '.subset-weight'
+              ),
+              subset.querySelector(
+                '.subset-reps'
+              )
+            );
+
+            if (!pair) {
+              return;
+            }
+
+            sets.push({
+              exerciseId:
+                card.dataset.exerciseId,
+
+              exerciseName:
+                card.dataset.exerciseName,
+
+              setNo: Number(
+                `${parentSetNo}.${subsetIndex + 1}`
+              ),
+
+              weight: pair.weight,
+              reps: pair.reps,
+              success: true,
+
+              memo:
+                `【ダウンセット】${exerciseMemo}`
+            });
+          }
+        );
       }
-
-      if (
-        weightValue === '' ||
-        repsValue === ''
-      ) {
-        return;
-      }
-
-      const weight = Number(weightValue);
-      const reps = Number(repsValue);
-
-      if (
-        Number.isNaN(weight) ||
-        Number.isNaN(reps)
-      ) {
-        return;
-      }
-
-      sets.push({
-        exerciseId: exerciseId,
-        exerciseName: exerciseName,
-        setNo: index + 1,
-        weight: weight,
-        reps: reps,
-        success: success,
-        memo: exerciseMemo
-      });
-    });
+    );
   });
 
   if (sets.length === 0) {
@@ -952,14 +1017,59 @@ function collectWorkoutPayload() {
   return {
     date: date,
     bodyPart: bodyPart,
-    sessionName: sessionName,
-    memo: memo,
+
+    sessionName:
+      `${date.replaceAll('-', '/')} ${bodyPart}`,
+
+    memo:
+      sessionMemoInput.value.trim(),
+
     sets: sets
   };
 }
 
+function readInputPair(
+  weightInput,
+  repsInput
+) {
+  const weightText =
+    weightInput.value;
+
+  const repsText =
+    repsInput.value;
+
+  if (
+    weightText === '' &&
+    repsText === ''
+  ) {
+    return null;
+  }
+
+  if (
+    weightText === '' ||
+    repsText === ''
+  ) {
+    return null;
+  }
+
+  const weight = Number(weightText);
+  const reps = Number(repsText);
+
+  if (
+    Number.isNaN(weight) ||
+    Number.isNaN(reps)
+  ) {
+    return null;
+  }
+
+  return {
+    weight: weight,
+    reps: reps
+  };
+}
+
 /* =========================
-   Notionにトレーニング保存
+   Notion保存
 ========================= */
 
 async function handleSubmitWorkout() {
@@ -973,7 +1083,8 @@ async function handleSubmitWorkout() {
 
   submitButton.disabled = true;
 
-  setSubmitMessage(
+  setMessage(
+    submitMessage,
     '保存中...',
     ''
   );
@@ -982,42 +1093,24 @@ async function handleSubmitWorkout() {
     const payload =
       collectWorkoutPayload();
 
-    const result =
-      await postToGas(payload);
+    await postToGas(payload);
 
-    console.log(result);
-
-    /*
-     * 保存成功後に、下書きが再保存されないように
-     * 自動保存を一時停止する
-     */
     isClearingAfterSave = true;
 
-    /*
-     * 予約中の自動保存をキャンセル
-     */
     if (draftSaveTimer) {
       clearTimeout(draftSaveTimer);
       draftSaveTimer = null;
     }
 
-    /*
-     * localStorageの下書きを削除
-     */
     clearDraft();
-
-    /*
-     * 画面上の入力データを初期化
-     */
     resetWorkoutForm();
 
-    /*
-     * 初期化完了後に自動保存を再開
-     */
     isClearingAfterSave = false;
 
-    setSubmitMessage(
-      'Notionに保存しました。入力データと下書きを削除しました。',
+    setMessage(
+      submitMessage,
+      'Notionに保存しました。' +
+      '入力データと下書きを削除しました。',
       'success'
     );
 
@@ -1028,23 +1121,17 @@ async function handleSubmitWorkout() {
 
     isClearingAfterSave = false;
 
-    setSubmitMessage(
-      '保存に失敗しました: ' + error.message,
+    setMessage(
+      submitMessage,
+      '保存に失敗しました: ' +
+      error.message,
       'error'
     );
 
     submitButton.disabled = false;
-
-    /*
-     * 保存失敗時は入力内容を下書きに残す
-     */
     saveDraftDebounced();
   }
 }
-
-/* =========================
-   保存後の画面初期化
-========================= */
 
 function resetWorkoutForm() {
   workoutDateInput.value =
@@ -1067,129 +1154,7 @@ function resetWorkoutForm() {
 }
 
 /* =========================
-   予定フォーム
-========================= */
-
-function togglePlanForm() {
-  const isHidden =
-    planForm.classList.contains('hidden');
-
-  planForm.classList.toggle(
-    'hidden',
-    !isHidden
-  );
-
-  togglePlanFormButton.textContent =
-    isHidden
-      ? '予定を閉じる'
-      : '予定を追加';
-
-  if (isHidden) {
-    if (!planDateInput.value) {
-      planDateInput.value =
-        getTodayIsoDate();
-    }
-
-    setPlanMessage('', '');
-  }
-}
-
-function openPlanFormForDate(dateString) {
-  planDateInput.value = dateString;
-
-  if (
-    planForm.classList.contains('hidden')
-  ) {
-    planForm.classList.remove('hidden');
-
-    togglePlanFormButton.textContent =
-      '予定を閉じる';
-  }
-
-  setPlanMessage(
-    '予定日を選択しました。部位を選んで保存してください。',
-    ''
-  );
-
-  planBodyPartSelect.focus();
-
-  planForm.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-  });
-}
-
-/* =========================
-   予定をNotionに保存
-========================= */
-
-async function handleSavePlan() {
-  const date = planDateInput.value;
-  const bodyPart =
-    planBodyPartSelect.value;
-
-  const memo =
-    planMemoInput.value.trim();
-
-  if (!date) {
-    alert('予定日を入力してください。');
-    return;
-  }
-
-  if (!bodyPart) {
-    alert('部位を選択してください。');
-    return;
-  }
-
-  savePlanButton.disabled = true;
-
-  setPlanMessage(
-    '予定を保存中...',
-    ''
-  );
-
-  try {
-    const result = await postToGas({
-      action: 'createPlan',
-      date: date,
-      bodyPart: bodyPart,
-      memo: memo
-    });
-
-    console.log(result);
-
-    setPlanMessage(
-      '予定を保存しました。',
-      'success'
-    );
-
-    planMemoInput.value = '';
-    planBodyPartSelect.value = '';
-
-    currentCalendarDate = new Date(
-      Number(date.slice(0, 4)),
-      Number(date.slice(5, 7)) - 1,
-      1
-    );
-
-    await loadCalendar();
-
-  } catch (error) {
-    console.error(error);
-
-    setPlanMessage(
-      '予定の保存に失敗しました: ' +
-        error.message,
-      'error'
-    );
-
-  } finally {
-    savePlanButton.disabled = false;
-  }
-}
-
-/* =========================
-   下書き自動保存
+   下書き保存
 ========================= */
 
 function setupDraftAutoSave() {
@@ -1210,16 +1175,15 @@ function setupDraftAutoSave() {
 
   window.addEventListener(
     'beforeunload',
-    () => {
-      saveDraftNow();
-    }
+    saveDraftNow
   );
 
   document.addEventListener(
     'visibilitychange',
     () => {
       if (
-        document.visibilityState === 'hidden'
+        document.visibilityState ===
+        'hidden'
       ) {
         saveDraftNow();
       }
@@ -1245,76 +1209,15 @@ function saveDraftDebounced() {
   }, 300);
 }
 
-function saveDraftNow() {
-  if (
-    isRestoringDraft ||
-    isClearingAfterSave
-  ) {
-    return;
-  }
-
-  const draft = collectDraftState();
-
-  /*
-   * 日付しか入っていない初期状態は
-   * 下書きとして保存しない
-   */
-  if (!hasMeaningfulDraftData(draft)) {
-    clearDraft();
-    return;
-  }
-
-  try {
-    localStorage.setItem(
-      DRAFT_STORAGE_KEY,
-      JSON.stringify(draft)
-    );
-
-  } catch (error) {
-    console.error(
-      '下書き保存に失敗しました',
-      error
-    );
-  }
-}
-
-function hasMeaningfulDraftData(draft) {
-  const hasBodyPart =
-    Boolean(draft.bodyPart);
-
-  const hasSessionMemo =
-    Boolean(
-      draft.sessionMemo &&
-      draft.sessionMemo.trim()
-    );
-
-  const hasSelectedExercises =
-    Array.isArray(draft.selectedPickerIds) &&
-    draft.selectedPickerIds.length > 0;
-
-  const hasExerciseCards =
-    Array.isArray(draft.exerciseCards) &&
-    draft.exerciseCards.length > 0;
-
-  return (
-    hasBodyPart ||
-    hasSessionMemo ||
-    hasSelectedExercises ||
-    hasExerciseCards
-  );
-}
-
-/* =========================
-   下書きデータ収集
-========================= */
-
 function collectDraftState() {
   const selectedPickerIds =
     Array.from(
       exercisePicker.querySelectorAll(
         '.picker-checkbox:checked'
       )
-    ).map((checkbox) => checkbox.value);
+    ).map(
+      (checkbox) => checkbox.value
+    );
 
   const exerciseCards =
     Array.from(
@@ -1322,23 +1225,48 @@ function collectDraftState() {
         '.exercise-card'
       )
     ).map((card) => {
-      const rows =
+      const sets =
         Array.from(
-          card.querySelectorAll('.set-row')
-        ).map((row) => {
+          card.querySelectorAll(
+            '.sets-container > .set-block'
+          )
+        ).map((block) => {
+          const subsets =
+            Array.from(
+              block.querySelectorAll(
+                '.subset-row'
+              )
+            ).map((subset) => {
+              return {
+                weight:
+                  subset.querySelector(
+                    '.subset-weight'
+                  ).value,
+
+                reps:
+                  subset.querySelector(
+                    '.subset-reps'
+                  ).value
+              };
+            });
+
           return {
             weight:
-              row.querySelector(
+              block.querySelector(
                 '.set-weight'
               ).value,
 
             reps:
-              row.querySelector(
+              block.querySelector(
                 '.set-reps'
               ).value,
 
             success:
-              row.dataset.success !== 'false'
+              block.querySelector(
+                '.set-row'
+              ).dataset.success !== 'false',
+
+            subsets: subsets
           };
         });
 
@@ -1354,232 +1282,74 @@ function collectDraftState() {
             '.exercise-memo'
           ).value,
 
-        sets: rows
+        sets: sets
       };
     });
 
   return {
-    savedAt: new Date().toISOString(),
-    date: workoutDateInput.value,
-    bodyPart: bodyPartSelect.value,
-    sessionMemo: sessionMemoInput.value,
-    loadedExercises: loadedExercises,
-    selectedPickerIds: selectedPickerIds,
-    exerciseCards: exerciseCards
+    savedAt:
+      new Date().toISOString(),
+
+    date:
+      workoutDateInput.value,
+
+    bodyPart:
+      bodyPartSelect.value,
+
+    sessionMemo:
+      sessionMemoInput.value,
+
+    loadedExercises:
+      loadedExercises,
+
+    selectedPickerIds:
+      selectedPickerIds,
+
+    exerciseCards:
+      exerciseCards
   };
 }
 
-/* =========================
-   下書き復元
-========================= */
-
-async function restoreDraftOnOpen() {
-  const draft = loadDraft();
-
-  if (!draft) {
-    return;
-  }
-
-  /*
-   * 空データや不正な下書きだった場合は削除
-   */
-  if (!hasMeaningfulDraftData(draft)) {
-    clearDraft();
-    return;
-  }
-
-  const savedText = draft.savedAt
-    ? formatSavedAtText(draft.savedAt)
-    : '';
-
-  const shouldRestore = confirm(
-    '保存前の下書きがあります。復元しますか？' +
-      (
-        savedText
-          ? '\n\n保存日時: ' + savedText
-          : ''
-      )
+function hasMeaningfulDraftData(draft) {
+  return Boolean(
+    draft.bodyPart ||
+    draft.sessionMemo?.trim() ||
+    draft.selectedPickerIds?.length ||
+    draft.exerciseCards?.length
   );
+}
 
-  if (!shouldRestore) {
-    const shouldDelete = confirm(
-      'この下書きを削除しますか？'
-    );
-
-    if (shouldDelete) {
-      clearDraft();
-    }
-
+function saveDraftNow() {
+  if (
+    isRestoringDraft ||
+    isClearingAfterSave
+  ) {
     return;
   }
 
-  await restoreDraft(draft);
-}
-
-function loadDraft() {
-  try {
-    const text =
-      localStorage.getItem(
-        DRAFT_STORAGE_KEY
-      );
-
-    if (!text) {
-      return null;
-    }
-
-    return JSON.parse(text);
-
-  } catch (error) {
-    console.error(
-      '下書き読み込みに失敗しました',
-      error
-    );
-
-    /*
-     * JSONが壊れている場合は削除
-     */
-    clearDraft();
-
-    return null;
-  }
-}
-
-async function restoreDraft(draft) {
-  isRestoringDraft = true;
+  const draft =
+    collectDraftState();
 
   try {
-    workoutDateInput.value =
-      draft.date || getTodayIsoDate();
-
-    bodyPartSelect.value =
-      draft.bodyPart || '';
-
-    sessionMemoInput.value =
-      draft.sessionMemo || '';
-
-    exercisePicker.innerHTML = '';
-    exerciseList.innerHTML = '';
-
-    loadedExercises = [];
-
-    submitButton.disabled = true;
-    addSelectedExercisesButton.disabled = true;
-
     if (
-      Array.isArray(draft.loadedExercises) &&
-      draft.loadedExercises.length > 0
+      hasMeaningfulDraftData(draft)
     ) {
-      loadedExercises =
-        draft.loadedExercises;
-
-    } else if (draft.bodyPart) {
-      const data = await getFromGas({
-        action: 'getExercisesWithLastWorkout',
-        bodyPart: draft.bodyPart
-      });
-
-      loadedExercises =
-        data.exercises || [];
-    }
-
-    if (loadedExercises.length > 0) {
-      renderExercisePicker(
-        loadedExercises
-      );
-
-      addSelectedExercisesButton.disabled =
-        false;
-
-      if (
-        Array.isArray(
-          draft.selectedPickerIds
-        )
-      ) {
-        draft.selectedPickerIds.forEach(
-          (id) => {
-            const checkbox =
-              exercisePicker.querySelector(
-                `.picker-checkbox[value="${id}"]`
-              );
-
-            if (checkbox) {
-              checkbox.checked = true;
-            }
-          }
-        );
-      }
-    }
-
-    if (
-      Array.isArray(draft.exerciseCards)
-    ) {
-      draft.exerciseCards.forEach(
-        (savedExerciseData) => {
-          let exercise =
-            loadedExercises.find(
-              (item) =>
-                item.id ===
-                savedExerciseData.exerciseId
-            );
-
-          if (!exercise) {
-            exercise = {
-              id:
-                savedExerciseData.exerciseId,
-
-              name:
-                savedExerciseData.exerciseName ||
-                '種目',
-
-              bodyPart:
-                draft.bodyPart || '',
-
-              category: '',
-              order: null,
-              lastWorkout: null
-            };
-          }
-
-          renderExerciseCard(
-            exercise,
-            savedExerciseData
-          );
-        }
-      );
-    }
-
-    submitButton.disabled =
-      exerciseList.querySelectorAll(
-        '.exercise-card'
-      ).length === 0;
-
-    if (draft.bodyPart) {
-      setStatus(
-        `${draft.bodyPart}の下書きを復元しました。`
+      localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify(draft)
       );
 
     } else {
-      setStatus(
-        '下書きを復元しました。'
-      );
+      clearDraft();
     }
 
   } catch (error) {
-    console.error(error);
-
-    setStatus(
-      '下書き復元に失敗しました: ' +
-        error.message
+    console.error(
+      '下書き保存に失敗しました',
+      error
     );
-
-  } finally {
-    isRestoringDraft = false;
   }
 }
-
-/* =========================
-   下書き削除
-========================= */
 
 function clearDraft() {
   if (draftSaveTimer) {
@@ -1600,40 +1370,319 @@ function clearDraft() {
   }
 }
 
-function formatSavedAtText(isoString) {
-  const date = new Date(isoString);
+function loadDraft() {
+  try {
+    const text =
+      localStorage.getItem(
+        DRAFT_STORAGE_KEY
+      );
 
-  if (Number.isNaN(date.getTime())) {
-    return isoString;
+    return text
+      ? JSON.parse(text)
+      : null;
+
+  } catch (error) {
+    clearDraft();
+    return null;
+  }
+}
+
+async function restoreDraftOnOpen() {
+  const draft = loadDraft();
+
+  if (
+    !draft ||
+    !hasMeaningfulDraftData(draft)
+  ) {
+    return;
   }
 
-  const year =
-    date.getFullYear();
+  const savedDate =
+    draft.savedAt
+      ? new Date(
+          draft.savedAt
+        ).toLocaleString('ja-JP')
+      : '';
 
-  const month =
-    String(date.getMonth() + 1)
-      .padStart(2, '0');
-
-  const day =
-    String(date.getDate())
-      .padStart(2, '0');
-
-  const hour =
-    String(date.getHours())
-      .padStart(2, '0');
-
-  const minute =
-    String(date.getMinutes())
-      .padStart(2, '0');
-
-  return (
-    `${year}/${month}/${day} ` +
-    `${hour}:${minute}`
+  const shouldRestore = confirm(
+    '保存前の下書きがあります。' +
+    '復元しますか？' +
+    (
+      savedDate
+        ? `\n\n保存日時: ${savedDate}`
+        : ''
+    )
   );
+
+  if (!shouldRestore) {
+    const shouldDelete = confirm(
+      'この下書きを削除しますか？'
+    );
+
+    if (shouldDelete) {
+      clearDraft();
+    }
+
+    return;
+  }
+
+  await restoreDraft(draft);
+}
+
+async function restoreDraft(draft) {
+  isRestoringDraft = true;
+
+  try {
+    workoutDateInput.value =
+      draft.date ||
+      getTodayIsoDate();
+
+    bodyPartSelect.value =
+      draft.bodyPart || '';
+
+    sessionMemoInput.value =
+      draft.sessionMemo || '';
+
+    loadedExercises =
+      Array.isArray(
+        draft.loadedExercises
+      )
+        ? draft.loadedExercises
+        : [];
+
+    if (
+      loadedExercises.length === 0 &&
+      draft.bodyPart
+    ) {
+      const data = await getFromGas({
+        action:
+          'getExercisesWithLastWorkout',
+
+        bodyPart:
+          draft.bodyPart
+      });
+
+      loadedExercises =
+        data.exercises || [];
+    }
+
+    if (
+      loadedExercises.length > 0
+    ) {
+      renderExercisePicker(
+        loadedExercises
+      );
+
+      addSelectedExercisesButton.disabled =
+        false;
+
+      const selectedIds =
+        Array.isArray(
+          draft.selectedPickerIds
+        )
+          ? draft.selectedPickerIds
+          : [];
+
+      selectedIds.forEach((id) => {
+        const checkbox =
+          exercisePicker.querySelector(
+            `.picker-checkbox[value="${id}"]`
+          );
+
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+      });
+    }
+
+    const savedCards =
+      Array.isArray(
+        draft.exerciseCards
+      )
+        ? draft.exerciseCards
+        : [];
+
+    savedCards.forEach(
+      (savedExerciseData) => {
+        let exercise =
+          loadedExercises.find(
+            (item) =>
+              item.id ===
+              savedExerciseData.exerciseId
+          );
+
+        if (!exercise) {
+          exercise = {
+            id:
+              savedExerciseData.exerciseId,
+
+            name:
+              savedExerciseData.exerciseName ||
+              '種目',
+
+            bodyPart:
+              draft.bodyPart || '',
+
+            category: '',
+            lastWorkout: null
+          };
+        }
+
+        renderExerciseCard(
+          exercise,
+          savedExerciseData
+        );
+      }
+    );
+
+    submitButton.disabled =
+      !exerciseList.querySelector(
+        '.exercise-card'
+      );
+
+    setStatus(
+      `${draft.bodyPart || ''}` +
+      'の下書きを復元しました。'
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      '下書き復元に失敗しました: ' +
+      error.message
+    );
+
+  } finally {
+    isRestoringDraft = false;
+  }
 }
 
 /* =========================
-   カレンダー読み込み
+   予定
+========================= */
+
+function togglePlanForm() {
+  const opening =
+    planForm.classList.contains(
+      'hidden'
+    );
+
+  planForm.classList.toggle(
+    'hidden',
+    !opening
+  );
+
+  togglePlanFormButton.textContent =
+    opening
+      ? '予定を閉じる'
+      : '予定を追加';
+
+  if (
+    opening &&
+    !planDateInput.value
+  ) {
+    planDateInput.value =
+      getTodayIsoDate();
+  }
+}
+
+function openPlanFormForDate(date) {
+  planDateInput.value = date;
+
+  planForm.classList.remove(
+    'hidden'
+  );
+
+  togglePlanFormButton.textContent =
+    '予定を閉じる';
+
+  setMessage(
+    planMessage,
+    '予定日を選択しました。' +
+    '部位を選んで保存してください。',
+    ''
+  );
+
+  planForm.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+async function handleSavePlan() {
+  const date =
+    planDateInput.value;
+
+  const bodyPart =
+    planBodyPartSelect.value;
+
+  if (!date) {
+    alert(
+      '予定日を入力してください。'
+    );
+    return;
+  }
+
+  if (!bodyPart) {
+    alert(
+      '部位を選択してください。'
+    );
+    return;
+  }
+
+  savePlanButton.disabled = true;
+
+  setMessage(
+    planMessage,
+    '予定を保存中...',
+    ''
+  );
+
+  try {
+    await postToGas({
+      action: 'createPlan',
+      date: date,
+      bodyPart: bodyPart,
+      memo:
+        planMemoInput.value.trim()
+    });
+
+    setMessage(
+      planMessage,
+      '予定を保存しました。',
+      'success'
+    );
+
+    planMemoInput.value = '';
+    planBodyPartSelect.value = '';
+
+    currentCalendarDate =
+      new Date(
+        Number(date.slice(0, 4)),
+        Number(date.slice(5, 7)) - 1,
+        1
+      );
+
+    await loadCalendar();
+
+  } catch (error) {
+    console.error(error);
+
+    setMessage(
+      planMessage,
+      '予定の保存に失敗しました: ' +
+      error.message,
+      'error'
+    );
+
+  } finally {
+    savePlanButton.disabled = false;
+  }
+}
+
+/* =========================
+   カレンダー
 ========================= */
 
 async function loadCalendar() {
@@ -1700,10 +1749,6 @@ async function loadCalendar() {
   }
 }
 
-/* =========================
-   カレンダー描画
-========================= */
-
 function renderCalendar(
   year,
   month,
@@ -1711,24 +1756,35 @@ function renderCalendar(
 ) {
   calendarGrid.innerHTML = '';
 
-  const sessionsByDate =
-    groupSessionsByDate(sessions);
+  const grouped = {};
+
+  sessions.forEach((session) => {
+    if (!session.date) {
+      return;
+    }
+
+    if (!grouped[session.date]) {
+      grouped[session.date] = [];
+    }
+
+    grouped[session.date].push(
+      session
+    );
+  });
 
   const firstDate =
     new Date(year, month - 1, 1);
 
-  const lastDate =
-    new Date(year, month, 0);
-
-  const firstDayIndex =
-    getMondayStartDayIndex(firstDate);
+  const firstDayOffset =
+    (firstDate.getDay() + 6) % 7;
 
   const daysInMonth =
-    lastDate.getDate();
+    new Date(year, month, 0)
+      .getDate();
 
   for (
     let index = 0;
-    index < firstDayIndex;
+    index < firstDayOffset;
     index += 1
   ) {
     const emptyCell =
@@ -1747,35 +1803,29 @@ function renderCalendar(
     day <= daysInMonth;
     day += 1
   ) {
-    const dateString =
-      formatCalendarDate(
-        year,
-        month,
-        day
-      );
-
-    const daySessions =
-      sessionsByDate[dateString] || [];
+    const date =
+      `${String(year).padStart(4, '0')}-` +
+      `${String(month).padStart(2, '0')}-` +
+      `${String(day).padStart(2, '0')}`;
 
     const cell =
       document.createElement('button');
 
     cell.type = 'button';
-
-    cell.className =
-      'calendar-day calendar-day-button';
-
-    cell.dataset.date = dateString;
+    cell.className = 'calendar-day';
 
     if (
-      dateString === getTodayIsoDate()
+      date === getTodayIsoDate()
     ) {
       cell.classList.add('today');
     }
 
-    cell.addEventListener('click', () => {
-      openPlanFormForDate(dateString);
-    });
+    cell.addEventListener(
+      'click',
+      () => {
+        openPlanFormForDate(date);
+      }
+    );
 
     const dayNumber =
       document.createElement('div');
@@ -1792,35 +1842,49 @@ function renderCalendar(
     badges.className =
       'calendar-badges';
 
-    const badgeItems =
-      buildCalendarBadgeItems(
-        daySessions
-      );
+    const bodyPartMap = {};
 
-    badgeItems.forEach((item) => {
-      const badge =
-        document.createElement('span');
+    const daySessions =
+      grouped[date] || [];
 
-      badge.className = [
-        'body-badge',
-        getBodyPartClass(item.bodyPart),
-        item.type
-      ].join(' ');
+    daySessions.forEach((session) => {
+      const type =
+        getSessionType(session);
 
-      badge.textContent =
-        getBodyPartShortName(
-          item.bodyPart
-        );
-
-      badge.title =
-        `${
-          item.type === 'actual'
-            ? '実績'
-            : '予定'
-        }：${item.bodyPart}`;
-
-      badges.appendChild(badge);
+      if (
+        !bodyPartMap[
+          session.bodyPart
+        ] ||
+        type === 'actual'
+      ) {
+        bodyPartMap[
+          session.bodyPart
+        ] = type;
+      }
     });
+
+    Object.entries(
+      bodyPartMap
+    ).forEach(
+      ([bodyPart, type]) => {
+        const badge =
+          document.createElement('span');
+
+        badge.className =
+          `body-badge ${type}`;
+
+        const shortNames = {
+          '背中': '背',
+          '全身': '全'
+        };
+
+        badge.textContent =
+          shortNames[bodyPart] ||
+          bodyPart.slice(0, 1);
+
+        badges.appendChild(badge);
+      }
+    );
 
     cell.appendChild(dayNumber);
     cell.appendChild(badges);
@@ -1829,164 +1893,15 @@ function renderCalendar(
   }
 }
 
-/* =========================
-   カレンダーデータ処理
-========================= */
-
-function buildCalendarBadgeItems(
-  sessions
-) {
-  const map = {};
-
-  sessions.forEach((session) => {
-    const bodyPart =
-      session.bodyPart || '';
-
-    if (!bodyPart) {
-      return;
-    }
-
-    const type =
-      getSessionType(session);
-
-    const key = bodyPart;
-
-    if (!map[key]) {
-      map[key] = {
-        bodyPart: bodyPart,
-        type: type
-      };
-
-      return;
-    }
-
-    /*
-     * 同じ部位で予定と実績が両方ある場合は
-     * 実績を優先する
-     */
-    if (
-      map[key].type === 'plan' &&
-      type === 'actual'
-    ) {
-      map[key].type = 'actual';
-    }
-  });
-
-  return Object.keys(map).map(
-    (key) => map[key]
-  );
-}
-
 function getSessionType(session) {
-  if (session.type === 'actual') {
-    return 'actual';
-  }
-
-  if (session.type === 'plan') {
-    return 'plan';
-  }
-
-  if (session.status === 'Done') {
+  if (
+    session.type === 'actual' ||
+    session.status === 'Done'
+  ) {
     return 'actual';
   }
 
   return 'plan';
-}
-
-function groupSessionsByDate(sessions) {
-  const grouped = {};
-
-  sessions.forEach((session) => {
-    if (!session.date) {
-      return;
-    }
-
-    if (!grouped[session.date]) {
-      grouped[session.date] = [];
-    }
-
-    grouped[session.date].push(
-      session
-    );
-  });
-
-  return grouped;
-}
-
-/* =========================
-   カレンダー補助
-========================= */
-
-function getMondayStartDayIndex(date) {
-  const day = date.getDay();
-
-  /*
-   * JavaScript：
-   * 日曜=0、月曜=1
-   *
-   * 表示：
-   * 月曜=0、日曜=6
-   */
-  if (day === 0) {
-    return 6;
-  }
-
-  return day - 1;
-}
-
-function formatCalendarDate(
-  year,
-  month,
-  day
-) {
-  const yearText =
-    String(year).padStart(4, '0');
-
-  const monthText =
-    String(month).padStart(2, '0');
-
-  const dayText =
-    String(day).padStart(2, '0');
-
-  return (
-    `${yearText}-` +
-    `${monthText}-` +
-    `${dayText}`
-  );
-}
-
-function getBodyPartShortName(bodyPart) {
-  const map = {
-    '胸': '胸',
-    '背中': '背',
-    '脚': '脚',
-    '腕': '腕',
-    '肩': '肩',
-    '腹': '腹',
-    '全身': '全'
-  };
-
-  return (
-    map[bodyPart] ||
-    bodyPart.slice(0, 1)
-  );
-}
-
-function getBodyPartClass(bodyPart) {
-  const map = {
-    '胸': 'body-chest',
-    '背中': 'body-back',
-    '脚': 'body-legs',
-    '腕': 'body-arms',
-    '肩': 'body-shoulders',
-    '腹': 'body-abs',
-    '全身': 'body-full'
-  };
-
-  return (
-    map[bodyPart] ||
-    'body-full'
-  );
 }
 
 /* =========================
