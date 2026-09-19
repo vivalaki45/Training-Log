@@ -5,31 +5,20 @@
   --text: #f4f4f4;
   --text-soft: #d4d4d4;
   --muted: #a7a7a7;
-  --line: #333333;
-
+  --line: #383838;
   --primary: #ea580c;
-  --primary-dark: #c2410c;
-  --primary-deep: #9a3412;
   --primary-light: #fb923c;
-  --primary-soft: rgba(234, 88, 12, 0.18);
-
-  --danger: #ff5c5c;
-  --danger-dark: #7f1d1d;
-  --danger-main: #b91c1c;
-
-  --success: #ea580c;
+  --primary-soft: rgba(234, 88, 12, 0.15);
+  --danger: #ff6b6b;
   --input: #151515;
 
-  --button-gradient-orange: linear-gradient(90deg, #ff8a1f 0%, #f97316 45%, #c2410c 100%);
-  --button-gradient-orange-active: linear-gradient(90deg, #f97316 0%, #ea580c 45%, #9a3412 100%);
-
-  --body-chest: #ef4444;
-  --body-back: #3b82f6;
-  --body-legs: #22c55e;
-  --body-arms: #a855f7;
-  --body-shoulders: #f97316;
-  --body-abs: #eab308;
-  --body-full: #94a3b8;
+  --button-gradient:
+    linear-gradient(
+      90deg,
+      #ff8a1f 0%,
+      #f97316 45%,
+      #c2410c 100%
+    );
 }
 
 * {
@@ -65,8 +54,7 @@ textarea {
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 16px;
-  padding-bottom: 32px;
+  padding: 16px 16px max(32px, env(safe-area-inset-bottom));
 }
 
 .app-header {
@@ -77,13 +65,10 @@ textarea {
   margin: 0 0 12px;
   font-size: 28px;
   line-height: 1.2;
-  font-weight: 700;
 }
 
 .training-rule {
-  padding: 4px 0 0;
-  color: var(--text);
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.7;
   letter-spacing: 0.02em;
 }
@@ -100,6 +85,7 @@ textarea {
 }
 
 .tab-button {
+  min-height: 48px;
   border: 0;
   border-radius: 12px;
   padding: 12px;
@@ -123,18 +109,16 @@ textarea {
 }
 
 .card {
-  background: var(--card);
+  margin: 14px 0;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 16px;
-  margin: 14px 0;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  background: var(--card);
 }
 
 .card h2 {
   margin: 0 0 14px;
   font-size: 20px;
-  font-weight: 700;
 }
 
 .field {
@@ -142,7 +126,9 @@ textarea {
   margin: 14px 0;
 }
 
-.field span {
+.field > span,
+.set-row label span,
+.subset-inputs label span {
   display: block;
   margin-bottom: 6px;
   color: var(--text-soft);
@@ -160,7 +146,6 @@ textarea {
   color: var(--text);
   padding: 12px;
   outline: none;
-  font-weight: 400;
 }
 
 input:focus,
@@ -175,58 +160,73 @@ textarea {
   line-height: 1.5;
 }
 
+/* 日付欄 */
+
+.date-input-wrap {
+  position: relative;
+}
+
+.date-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  z-index: 1;
+  transform: translateY(-50%);
+  font-size: 17px;
+  pointer-events: none;
+}
+
+.date-input-wrap input[type="date"] {
+  height: 56px;
+  min-height: 56px;
+  padding: 0 48px 0 46px;
+  font-size: 18px;
+  font-weight: 650;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.date-input-wrap
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.date-input-wrap
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 14px;
+  width: 22px;
+  height: 22px;
+  opacity: 0.8;
+  filter: invert(1);
+  cursor: pointer;
+}
+
 .button {
   width: 100%;
+  min-height: 48px;
   border: 0;
   border-radius: 14px;
   padding: 14px 16px;
   color: #ffffff;
-  background: var(--primary);
+  background: var(--button-gradient);
   font-weight: 700;
   cursor: pointer;
-  box-shadow: none;
 }
 
 .button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  box-shadow: none;
-}
-
-.button.primary,
-.button.secondary,
-.button.submit,
-.button.calendar-today-button,
-.button.calendar-plan-toggle-button,
-.button.save-plan-button {
-  background: var(--button-gradient-orange);
-  color: #ffffff;
-  box-shadow: 0 10px 22px rgba(234, 88, 12, 0.18);
-}
-
-.button.primary:active,
-.button.secondary:active,
-.button.submit:active,
-.button.calendar-today-button:active,
-.button.calendar-plan-toggle-button:active,
-.button.save-plan-button:active {
-  background: var(--button-gradient-orange-active);
-}
-
-.button.submit {
-  font-size: 17px;
-  font-weight: 700;
 }
 
 .button.small {
   width: auto;
-  padding: 9px 12px;
+  min-height: 44px;
+  padding: 9px 13px;
   border-radius: 10px;
-  font-size: 14px;
   background: var(--primary);
-  color: #ffffff;
-  font-weight: 700;
-  box-shadow: none;
+  font-size: 14px;
 }
 
 .status-message,
@@ -236,7 +236,6 @@ textarea {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
-  font-weight: 400;
 }
 
 .submit-message,
@@ -254,9 +253,10 @@ textarea {
   color: var(--danger);
 }
 
-.exercise-picker {
+.exercise-picker,
+.exercise-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin: 12px 0 14px;
 }
 
@@ -265,10 +265,10 @@ textarea {
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
-  background: var(--card-2);
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 12px;
+  background: var(--card-2);
 }
 
 .picker-item input {
@@ -276,25 +276,19 @@ textarea {
 }
 
 .picker-name {
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .picker-category {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 400;
-}
-
-.exercise-list {
-  display: grid;
-  gap: 14px;
 }
 
 .exercise-card {
-  background: var(--card-2);
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 14px;
+  background: var(--card-2);
 }
 
 .exercise-header {
@@ -308,32 +302,27 @@ textarea {
 .exercise-name {
   margin: 0;
   font-size: 20px;
-  line-height: 1.35;
-  font-weight: 700;
 }
 
 .exercise-category {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 400;
 }
 
 .exercise-actions {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .exercise-actions button {
+  min-width: 44px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--input);
   color: var(--text);
-  padding: 8px 10px;
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
 }
 
@@ -343,9 +332,9 @@ textarea {
 
 .last-workout,
 .current-workout {
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 .last-workout h4,
@@ -353,17 +342,15 @@ textarea {
   margin: 0 0 8px;
   color: var(--text-soft);
   font-size: 14px;
-  font-weight: 600;
 }
 
 .last-workout-content {
-  color: var(--text);
   font-size: 14px;
   line-height: 1.7;
-  font-weight: 400;
 }
 
-.last-workout-empty {
+.last-workout-empty,
+.last-set-label {
   color: var(--muted);
 }
 
@@ -374,17 +361,18 @@ textarea {
   margin: 3px 0;
 }
 
-.last-set-label {
-  color: var(--muted);
-}
-
 .last-set-fail {
   color: var(--danger);
 }
 
 .sets-container {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+}
+
+.set-block {
+  display: grid;
+  gap: 8px;
 }
 
 .set-row {
@@ -392,28 +380,21 @@ textarea {
   grid-template-columns: 32px 1fr 1fr 96px 32px;
   gap: 8px;
   align-items: end;
-  background: var(--input);
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 10px;
+  background: var(--input);
 }
 
 .set-number {
-  color: var(--muted);
-  font-weight: 600;
   padding-bottom: 12px;
+  color: var(--muted);
+  font-weight: 700;
   text-align: center;
 }
 
-.set-row label span {
-  display: block;
-  margin-bottom: 5px;
-  color: var(--text-soft);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.set-row input[type="number"] {
+.set-row input,
+.subset-inputs input {
   padding: 10px;
   border-radius: 10px;
 }
@@ -422,50 +403,35 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  align-self: end;
   height: 42px;
-  background: transparent;
 }
 
 .result-button {
-  height: 100%;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #111111;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 750;
   cursor: pointer;
-  transition:
-    border-color 0.18s ease,
-    background 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.12s ease;
-}
-
-.result-button:active {
-  transform: scale(0.97);
 }
 
 .result-button.success.active {
   border-color: var(--primary);
   background: var(--primary);
   color: #ffffff;
-  box-shadow: none;
 }
 
 .result-button.fail.active {
-  border-color: var(--danger-main);
-  background: var(--danger-main);
+  border-color: #b91c1c;
+  background: #b91c1c;
   color: #ffffff;
-  box-shadow: none;
 }
 
-.remove-set-button {
+.remove-set-button,
+.remove-subset-button {
   width: 32px;
-  height: 38px;
+  height: 42px;
   border: 0;
   border-radius: 10px;
   background: rgba(255, 92, 92, 0.15);
@@ -476,14 +442,85 @@ textarea {
 }
 
 .add-set-button {
-  margin-top: 10px;
+  margin-top: 12px;
+}
+
+/* ダウンセット */
+
+.add-subset-button {
+  justify-self: start;
+  min-height: 38px;
+  margin-left: 40px;
+  border: 1px dashed rgba(251, 146, 60, 0.55);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: rgba(234, 88, 12, 0.08);
+  color: var(--primary-light);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.subsets-container {
+  display: grid;
+  gap: 8px;
+}
+
+.subset-row {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 8px;
+  margin-left: 28px;
+}
+
+.subset-branch {
+  padding-top: 11px;
+  color: var(--primary-light);
+  font-size: 20px;
+  text-align: right;
+}
+
+.subset-main {
+  padding: 10px;
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  background: rgba(234, 88, 12, 0.07);
+}
+
+.subset-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.subset-badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(234, 88, 12, 0.16);
+  color: var(--primary-light);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.subset-number {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.subset-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 32px;
+  gap: 8px;
+  align-items: end;
 }
 
 .submit-card {
-  position: static;
-  border-radius: 18px;
   margin-bottom: 0;
 }
+
+/* カレンダー */
 
 .calendar-card {
   overflow: hidden;
@@ -494,27 +531,21 @@ textarea {
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
-  margin-bottom: 12px;
 }
 
-.calendar-header h2 {
+.calendar-header h2,
+.calendar-status {
   margin: 0;
   text-align: center;
 }
 
-.calendar-status {
-  text-align: center;
-  margin-top: 2px;
-}
-
 .calendar-nav-button {
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--input);
   color: var(--text);
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 9px;
   cursor: pointer;
 }
 
@@ -522,20 +553,15 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 14px;
-}
-
-.calendar-today-button,
-.calendar-plan-toggle-button {
-  margin-bottom: 0;
+  margin: 14px 0;
 }
 
 .plan-form {
+  margin-bottom: 14px;
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--card-2);
-  padding: 14px;
-  margin-bottom: 14px;
 }
 
 .plan-form.hidden {
@@ -543,66 +569,45 @@ textarea {
 }
 
 .plan-form h3 {
-  margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 700;
+  margin: 0;
 }
 
-.calendar-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-}
-
+.calendar-weekdays,
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 
+.calendar-weekdays {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
 .calendar-day {
-  min-height: 72px;
+  min-height: 66px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--input);
+  color: var(--text);
   padding: 6px;
-  overflow: hidden;
-}
-
-.calendar-day-button {
-  display: block;
-  width: 100%;
   text-align: left;
-  color: inherit;
-  font: inherit;
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.calendar-day-button:active {
-  transform: scale(0.98);
 }
 
 .calendar-day.empty {
-  opacity: 0.35;
+  opacity: 0.3;
 }
 
 .calendar-day.today {
   border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary-soft);
 }
 
 .calendar-day-number {
-  color: var(--text-soft);
-  font-size: 12px;
-  font-weight: 600;
   margin-bottom: 5px;
+  font-size: 12px;
 }
 
 .calendar-badges {
@@ -617,116 +622,33 @@ textarea {
   justify-content: center;
   min-width: 20px;
   height: 20px;
+  border: 1px solid var(--primary);
   border-radius: 999px;
-  color: #ffffff;
-  font-size: 11px;
+  color: var(--primary-light);
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1;
-  border: 1px solid transparent;
 }
 
-.body-badge.plan {
-  background: transparent;
-}
-
-.body-badge.actual.body-chest,
-.legend-dot.body-chest {
-  background: var(--body-chest);
-}
-
-.body-badge.actual.body-back,
-.legend-dot.body-back {
-  background: var(--body-back);
-}
-
-.body-badge.actual.body-legs,
-.legend-dot.body-legs {
-  background: var(--body-legs);
-}
-
-.body-badge.actual.body-arms,
-.legend-dot.body-arms {
-  background: var(--body-arms);
-}
-
-.body-badge.actual.body-shoulders,
-.legend-dot.body-shoulders {
-  background: var(--body-shoulders);
-}
-
-.body-badge.actual.body-abs,
-.legend-dot.body-abs {
-  background: var(--body-abs);
-}
-
-.body-badge.actual.body-full,
-.legend-dot.body-full {
-  background: var(--body-full);
-}
-
-.body-badge.plan.body-chest {
-  border-color: var(--body-chest);
-  color: var(--body-chest);
-}
-
-.body-badge.plan.body-back {
-  border-color: var(--body-back);
-  color: var(--body-back);
-}
-
-.body-badge.plan.body-legs {
-  border-color: var(--body-legs);
-  color: var(--body-legs);
-}
-
-.body-badge.plan.body-arms {
-  border-color: var(--body-arms);
-  color: var(--body-arms);
-}
-
-.body-badge.plan.body-shoulders {
-  border-color: var(--body-shoulders);
-  color: var(--body-shoulders);
-}
-
-.body-badge.plan.body-abs {
-  border-color: var(--body-abs);
-  color: var(--body-abs);
-}
-
-.body-badge.plan.body-full {
-  border-color: var(--body-full);
-  color: var(--body-full);
+.body-badge.actual {
+  background: var(--primary);
+  color: #ffffff;
 }
 
 .calendar-legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   margin-top: 14px;
   color: var(--muted);
   font-size: 12px;
 }
 
 .calendar-legend span {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.body-legend {
-  margin-top: 8px;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+  gap: 5px;
 }
 
 .legend-sample {
-  display: inline-flex;
   width: 18px;
   height: 14px;
   border-radius: 999px;
@@ -738,26 +660,21 @@ textarea {
 
 .plan-sample {
   border: 1px solid var(--primary);
-  background: transparent;
 }
 
 @media (max-width: 520px) {
   .app {
-    padding: 12px;
-    padding-bottom: 32px;
+    padding:
+      12px 12px
+      max(32px, env(safe-area-inset-bottom));
   }
 
   .card {
     padding: 14px;
-    border-radius: 16px;
   }
 
   .exercise-header {
     flex-direction: column;
-  }
-
-  .exercise-actions {
-    justify-content: flex-start;
   }
 
   .picker-item {
@@ -765,7 +682,7 @@ textarea {
   }
 
   .picker-category {
-    grid-column: 2 / 3;
+    grid-column: 2;
   }
 
   .set-row {
@@ -774,12 +691,20 @@ textarea {
 
   .result-toggle {
     grid-column: 2 / 4;
-    width: 100%;
   }
 
   .remove-set-button {
-    grid-column: 3 / 4;
+    grid-column: 3;
     justify-self: end;
+  }
+
+  .subset-row {
+    margin-left: 12px;
+    grid-template-columns: 24px 1fr;
+  }
+
+  .add-subset-button {
+    margin-left: 36px;
   }
 
   .calendar-actions {
@@ -789,22 +714,11 @@ textarea {
   .calendar-day {
     min-height: 58px;
     padding: 5px;
-    border-radius: 10px;
   }
+}
 
-  .calendar-day-number {
-    font-size: 11px;
-    margin-bottom: 4px;
-  }
-
-  .body-badge {
-    min-width: 18px;
-    height: 18px;
-    font-size: 10px;
-  }
-
-  .calendar-nav-button {
-    padding: 9px 10px;
-    font-size: 12px;
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
   }
 }
