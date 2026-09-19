@@ -2,17 +2,15 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
   <title>Workout Logger</title>
-
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="app">
     <header class="app-header">
       <h1>Workout Logger</h1>
-
       <div class="training-rule">
         <div>前回より、１回でも多く、１kgでも重く</div>
         <div>10回出来たら次ある重さに</div>
@@ -20,21 +18,20 @@
     </header>
 
     <nav class="tabs" aria-label="画面切り替え">
-      <button type="button" class="tab-button active" data-tab="log">
-        記録
-      </button>
-      <button type="button" class="tab-button" data-tab="calendar">
-        カレンダー
-      </button>
+      <button type="button" class="tab-button active" data-tab="log">記録</button>
+      <button type="button" class="tab-button" data-tab="calendar">カレンダー</button>
     </nav>
 
     <section id="logTab" class="tab-panel active">
       <section class="card">
         <h2>今日の設定</h2>
 
-        <label class="field">
+        <label class="field date-field">
           <span>日付</span>
-          <input type="date" id="workoutDate" />
+          <div class="date-input-wrap">
+            <span class="date-icon" aria-hidden="true">📅</span>
+            <input type="date" id="workoutDate" />
+          </div>
         </label>
 
         <label class="field">
@@ -53,7 +50,11 @@
 
         <label class="field">
           <span>全体メモ</span>
-          <textarea id="sessionMemo" rows="2" placeholder="例：体調、混雑、フォーム感覚など"></textarea>
+          <textarea
+            id="sessionMemo"
+            rows="2"
+            placeholder="例：体調、混雑、フォーム感覚など"
+          ></textarea>
         </label>
 
         <button id="loadExercisesButton" class="button primary">
@@ -70,14 +71,17 @@
 
         <div id="exercisePicker" class="exercise-picker"></div>
 
-        <button id="addSelectedExercisesButton" class="button secondary" disabled>
+        <button
+          id="addSelectedExercisesButton"
+          class="button secondary"
+          disabled
+        >
           選んだ種目を追加
         </button>
       </section>
 
       <section class="card">
         <h2>今回のトレーニング</h2>
-
         <div id="exerciseList" class="exercise-list"></div>
       </section>
 
@@ -85,7 +89,6 @@
         <button id="submitButton" class="button submit" disabled>
           Notionに保存
         </button>
-
         <div id="submitMessage" class="submit-message"></div>
       </section>
     </section>
@@ -93,7 +96,11 @@
     <section id="calendarTab" class="tab-panel">
       <section class="card calendar-card">
         <div class="calendar-header">
-          <button type="button" id="prevMonthButton" class="calendar-nav-button">
+          <button
+            type="button"
+            id="prevMonthButton"
+            class="calendar-nav-button"
+          >
             前月
           </button>
 
@@ -104,17 +111,29 @@
             </div>
           </div>
 
-          <button type="button" id="nextMonthButton" class="calendar-nav-button">
+          <button
+            type="button"
+            id="nextMonthButton"
+            class="calendar-nav-button"
+          >
             次月
           </button>
         </div>
 
         <div class="calendar-actions">
-          <button type="button" id="todayMonthButton" class="button calendar-today-button">
+          <button
+            type="button"
+            id="todayMonthButton"
+            class="button calendar-today-button"
+          >
             今月に戻る
           </button>
 
-          <button type="button" id="togglePlanFormButton" class="button calendar-plan-toggle-button">
+          <button
+            type="button"
+            id="togglePlanFormButton"
+            class="button calendar-plan-toggle-button"
+          >
             予定を追加
           </button>
         </div>
@@ -143,10 +162,18 @@
 
           <label class="field">
             <span>予定メモ</span>
-            <textarea id="planMemo" rows="2" placeholder="例：胸の日、ベンチ重めなど"></textarea>
+            <textarea
+              id="planMemo"
+              rows="2"
+              placeholder="例：胸の日、ベンチ重めなど"
+            ></textarea>
           </label>
 
-          <button type="button" id="savePlanButton" class="button save-plan-button">
+          <button
+            type="button"
+            id="savePlanButton"
+            class="button save-plan-button"
+          >
             予定を保存
           </button>
 
@@ -166,18 +193,14 @@
         <div id="calendarGrid" class="calendar-grid"></div>
 
         <div class="calendar-legend">
-          <span><span class="legend-sample actual-sample"></span>実績</span>
-          <span><span class="legend-sample plan-sample"></span>予定</span>
-        </div>
-
-        <div class="calendar-legend body-legend">
-          <span><span class="legend-dot body-chest"></span>胸</span>
-          <span><span class="legend-dot body-back"></span>背</span>
-          <span><span class="legend-dot body-legs"></span>脚</span>
-          <span><span class="legend-dot body-arms"></span>腕</span>
-          <span><span class="legend-dot body-shoulders"></span>肩</span>
-          <span><span class="legend-dot body-abs"></span>腹</span>
-          <span><span class="legend-dot body-full"></span>全</span>
+          <span>
+            <i class="legend-sample actual-sample"></i>
+            実績
+          </span>
+          <span>
+            <i class="legend-sample plan-sample"></i>
+            予定
+          </span>
         </div>
       </section>
     </section>
@@ -200,9 +223,28 @@
         </div>
 
         <div class="exercise-actions">
-          <button type="button" class="move-up-button">↑</button>
-          <button type="button" class="move-down-button">↓</button>
-          <button type="button" class="remove-exercise-button">削除</button>
+          <button
+            type="button"
+            class="move-up-button"
+            aria-label="上へ移動"
+          >
+            ↑
+          </button>
+
+          <button
+            type="button"
+            class="move-down-button"
+            aria-label="下へ移動"
+          >
+            ↓
+          </button>
+
+          <button
+            type="button"
+            class="remove-exercise-button"
+          >
+            削除
+          </button>
         </div>
       </div>
 
@@ -216,44 +258,136 @@
 
         <div class="sets-container"></div>
 
-        <button type="button" class="button small add-set-button">
+        <button
+          type="button"
+          class="button small add-set-button"
+        >
           セット追加
         </button>
       </div>
 
       <label class="field">
         <span>種目メモ</span>
-        <textarea class="exercise-memo" rows="2" placeholder="フォーム、違和感、次回メモなど"></textarea>
+        <textarea
+          class="exercise-memo"
+          rows="2"
+          placeholder="フォーム、違和感、次回メモなど"
+        ></textarea>
       </label>
     </article>
   </template>
 
   <template id="setTemplate">
-    <div class="set-row">
-      <div class="set-number"></div>
+    <div class="set-block">
+      <div class="set-row">
+        <div class="set-number"></div>
 
-      <label>
-        <span>kg</span>
-        <input type="number" class="set-weight" inputmode="decimal" step="0.5" min="0" />
-      </label>
+        <label>
+          <span>kg</span>
+          <input
+            type="number"
+            class="set-weight"
+            inputmode="decimal"
+            step="0.5"
+            min="0"
+          />
+        </label>
 
-      <label>
-        <span>回</span>
-        <input type="number" class="set-reps" inputmode="numeric" step="1" min="0" />
-      </label>
+        <label>
+          <span>回</span>
+          <input
+            type="number"
+            class="set-reps"
+            inputmode="numeric"
+            step="1"
+            min="0"
+          />
+        </label>
 
-      <div class="result-toggle" role="group" aria-label="成功失敗">
-        <button type="button" class="result-button success active" data-success="true">
-          GOOD
-        </button>
-        <button type="button" class="result-button fail" data-success="false">
-          FAIL
+        <div
+          class="result-toggle"
+          role="group"
+          aria-label="成功失敗"
+        >
+          <button
+            type="button"
+            class="result-button success active"
+            data-success="true"
+          >
+            GOOD
+          </button>
+
+          <button
+            type="button"
+            class="result-button fail"
+            data-success="false"
+          >
+            FAIL
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="remove-set-button"
+          aria-label="セット削除"
+        >
+          ×
         </button>
       </div>
 
-      <button type="button" class="remove-set-button" aria-label="セット削除">
-        ×
+      <div class="subsets-container"></div>
+
+      <button
+        type="button"
+        class="add-subset-button"
+      >
+        ＋ ダウンセット
       </button>
+    </div>
+  </template>
+
+  <template id="subsetTemplate">
+    <div class="subset-row">
+      <div class="subset-branch" aria-hidden="true">└</div>
+
+      <div class="subset-main">
+        <div class="subset-heading">
+          <span class="subset-badge">ダウンセット</span>
+          <span class="subset-number"></span>
+        </div>
+
+        <div class="subset-inputs">
+          <label>
+            <span>kg</span>
+            <input
+              type="number"
+              class="subset-weight"
+              inputmode="decimal"
+              step="0.5"
+              min="0"
+            />
+          </label>
+
+          <label>
+            <span>回</span>
+            <input
+              type="number"
+              class="subset-reps"
+              inputmode="numeric"
+              step="1"
+              min="0"
+            />
+          </label>
+
+          <button
+            type="button"
+            class="remove-subset-button"
+            aria-label="ダウンセット削除"
+          >
+            ×
+          </button>
+        </div>
+      </div>
     </div>
   </template>
 
