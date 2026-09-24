@@ -8,8 +8,10 @@
   --line: #383838;
   --primary: #ea580c;
   --primary-light: #fb923c;
-  --primary-soft: rgba(234, 88, 12, 0.15);
+  --primary-soft:
+    rgba(234, 88, 12, 0.15);
   --danger: #ff6b6b;
+  --danger-dark: #991b1b;
   --input: #151515;
 
   --button-gradient:
@@ -21,6 +23,10 @@
     );
 }
 
+/* =========================
+   基本
+========================= */
+
 * {
   box-sizing: border-box;
 }
@@ -28,6 +34,7 @@
 html {
   background: var(--bg);
   color: var(--text);
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -50,12 +57,27 @@ textarea {
   font: inherit;
 }
 
+button {
+  -webkit-tap-highlight-color:
+    transparent;
+}
+
 .app {
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 16px 16px max(32px, env(safe-area-inset-bottom));
+
+  padding:
+    16px 16px
+    max(
+      32px,
+      env(safe-area-inset-bottom)
+    );
 }
+
+/* =========================
+   ヘッダー
+========================= */
 
 .app-header {
   padding: 16px 4px 12px;
@@ -73,14 +95,21 @@ textarea {
   letter-spacing: 0.02em;
 }
 
+/* =========================
+   タブ
+========================= */
+
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+
   margin: 12px 0 14px;
   padding: 4px;
+
   border: 1px solid var(--line);
   border-radius: 16px;
+
   background: #151515;
 }
 
@@ -89,8 +118,10 @@ textarea {
   border: 0;
   border-radius: 12px;
   padding: 12px;
+
   color: var(--muted);
   background: transparent;
+
   font-weight: 700;
   cursor: pointer;
 }
@@ -108,11 +139,17 @@ textarea {
   display: block;
 }
 
+/* =========================
+   カード
+========================= */
+
 .card {
   margin: 14px 0;
   padding: 16px;
+
   border: 1px solid var(--line);
   border-radius: 18px;
+
   background: var(--card);
 }
 
@@ -120,6 +157,10 @@ textarea {
   margin: 0 0 14px;
   font-size: 20px;
 }
+
+/* =========================
+   入力欄
+========================= */
 
 .field {
   display: block;
@@ -131,7 +172,9 @@ textarea {
 .subset-inputs label span {
   display: block;
   margin-bottom: 6px;
+
   color: var(--text-soft);
+
   font-size: 13px;
   font-weight: 500;
 }
@@ -140,10 +183,13 @@ input,
 select,
 textarea {
   width: 100%;
+
   border: 1px solid var(--line);
   border-radius: 12px;
+
   background: var(--input);
   color: var(--text);
+
   padding: 12px;
   outline: none;
 }
@@ -152,7 +198,10 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-soft);
+
+  box-shadow:
+    0 0 0 2px
+    var(--primary-soft);
 }
 
 textarea {
@@ -160,7 +209,9 @@ textarea {
   line-height: 1.5;
 }
 
-/* 日付欄 */
+/* =========================
+   日付入力
+========================= */
 
 .date-input-wrap {
   position: relative;
@@ -171,46 +222,70 @@ textarea {
   top: 50%;
   left: 15px;
   z-index: 1;
-  transform: translateY(-50%);
+
+  transform:
+    translateY(-50%);
+
   font-size: 17px;
+
   pointer-events: none;
 }
 
-.date-input-wrap input[type="date"] {
+.date-input-wrap
+input[type="date"] {
   height: 56px;
   min-height: 56px;
-  padding: 0 48px 0 46px;
+
+  padding:
+    0 48px
+    0 46px;
+
   font-size: 18px;
   font-weight: 650;
   text-align: left;
+
   appearance: none;
   -webkit-appearance: none;
 }
 
 .date-input-wrap
-input[type="date"]::-webkit-date-and-time-value {
+input[type="date"]
+::-webkit-date-and-time-value {
   text-align: left;
 }
 
 .date-input-wrap
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="date"]
+::-webkit-calendar-picker-indicator {
   position: absolute;
   right: 14px;
+
   width: 22px;
   height: 22px;
+
   opacity: 0.8;
   filter: invert(1);
+
   cursor: pointer;
 }
+
+/* =========================
+   ボタン
+========================= */
 
 .button {
   width: 100%;
   min-height: 48px;
+
   border: 0;
   border-radius: 14px;
+
   padding: 14px 16px;
+
   color: #ffffff;
-  background: var(--button-gradient);
+  background:
+    var(--button-gradient);
+
   font-weight: 700;
   cursor: pointer;
 }
@@ -223,17 +298,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .button.small {
   width: auto;
   min-height: 44px;
+
   padding: 9px 13px;
   border-radius: 10px;
+
   background: var(--primary);
+
   font-size: 14px;
 }
+
+.danger-button,
+.button.danger-button {
+  background: var(--danger-dark);
+  color: #ffffff;
+}
+
+/* =========================
+   メッセージ
+========================= */
 
 .status-message,
 .submit-message,
 .calendar-status,
 .plan-message {
   color: var(--muted);
+
   font-size: 14px;
   line-height: 1.6;
 }
@@ -253,41 +342,122 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--danger);
 }
 
+/* =========================
+   種目選択
+========================= */
+
 .exercise-picker,
 .exercise-list {
   display: grid;
   gap: 10px;
+
   margin: 12px 0 14px;
 }
 
 .picker-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+
+  grid-template-columns:
+    auto 34px 1fr;
+
   gap: 10px;
   align-items: center;
+
+  min-height: 58px;
   padding: 12px;
+
   border: 1px solid var(--line);
   border-radius: 12px;
+
   background: var(--card-2);
+
+  cursor: pointer;
+}
+
+.picker-item.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .picker-item input {
-  width: auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+
+  accent-color: var(--primary);
+}
+
+.picker-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 999px;
+
+  background: var(--primary);
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.picker-order:empty {
+  background: transparent;
+}
+
+.picker-text {
+  display: block;
+  min-width: 0;
 }
 
 .picker-name {
+  display: block;
   font-weight: 650;
 }
 
 .picker-category {
+  display: block;
+
+  margin-top: 3px;
+
   color: var(--muted);
+
   font-size: 12px;
 }
 
+/* =========================
+   種目マスター操作
+========================= */
+
+.exercise-master-actions {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 8px;
+
+  margin: 12px 0 14px;
+}
+
+.exercise-master-actions
+.button {
+  width: 100%;
+}
+
+/* =========================
+   種目カード
+========================= */
+
 .exercise-card {
   padding: 14px;
+
   border: 1px solid var(--line);
   border-radius: 16px;
+
   background: var(--card-2);
 }
 
@@ -295,6 +465,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -306,6 +477,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .exercise-category {
   margin: 4px 0 0;
+
   color: var(--muted);
   font-size: 13px;
 }
@@ -319,28 +491,40 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .exercise-actions button {
   min-width: 44px;
   min-height: 44px;
+
   border: 1px solid var(--line);
   border-radius: 10px;
+
   background: var(--input);
   color: var(--text);
+
   cursor: pointer;
 }
 
-.exercise-actions .remove-exercise-button {
+.exercise-actions
+.remove-exercise-button {
   color: var(--danger);
 }
+
+/* =========================
+   直近記録
+========================= */
 
 .last-workout,
 .current-workout {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid var(--line);
+
+  border-top:
+    1px solid var(--line);
 }
 
 .last-workout h4,
 .current-workout h4 {
   margin: 0 0 8px;
+
   color: var(--text-soft);
+
   font-size: 14px;
 }
 
@@ -349,21 +533,85 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   line-height: 1.7;
 }
 
-.last-workout-empty,
-.last-set-label {
+.last-workout-empty {
   color: var(--muted);
+}
+
+.last-workout-date {
+  margin-bottom: 7px;
+
+  color: var(--text-soft);
+
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.last-workout-sets {
+  display: grid;
+  gap: 3px;
 }
 
 .last-set-line {
   display: flex;
   flex-wrap: wrap;
+
   gap: 6px;
   margin: 3px 0;
+}
+
+.last-set-label {
+  min-width: 68px;
+  color: var(--muted);
 }
 
 .last-set-fail {
   color: var(--danger);
 }
+
+/* =========================
+   前回の種目メモ
+========================= */
+
+.previous-exercise-memo {
+  margin-top: 12px;
+  padding: 10px 12px;
+
+  border-left:
+    3px solid var(--primary);
+
+  border-radius: 8px;
+
+  background:
+    var(--primary-soft);
+
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.previous-exercise-memo.empty {
+  border-left-color: var(--line);
+
+  background: var(--input);
+  color: var(--muted);
+}
+
+.previous-memo-label {
+  margin-bottom: 4px;
+
+  color: var(--primary-light);
+
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.previous-memo-text {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* =========================
+   セット
+========================= */
 
 .sets-container {
   display: grid;
@@ -377,18 +625,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .set-row {
   display: grid;
-  grid-template-columns: 32px 1fr 1fr 96px 32px;
+
+  grid-template-columns:
+    32px 1fr 1fr 96px 32px;
+
   gap: 8px;
   align-items: end;
+
   padding: 10px;
+
   border: 1px solid var(--line);
   border-radius: 14px;
+
   background: var(--input);
 }
 
 .set-number {
   padding-bottom: 12px;
+
   color: var(--muted);
+
   font-weight: 700;
   text-align: center;
 }
@@ -401,7 +657,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .result-toggle {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+
+  grid-template-columns:
+    1fr 1fr;
+
   gap: 6px;
   height: 42px;
 }
@@ -409,21 +668,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .result-button {
   border: 1px solid var(--line);
   border-radius: 999px;
+
   background: #111111;
   color: var(--muted);
+
   font-size: 11px;
   font-weight: 750;
+
   cursor: pointer;
 }
 
 .result-button.success.active {
   border-color: var(--primary);
+
   background: var(--primary);
   color: #ffffff;
 }
 
 .result-button.fail.active {
   border-color: #b91c1c;
+
   background: #b91c1c;
   color: #ffffff;
 }
@@ -432,12 +696,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .remove-subset-button {
   width: 32px;
   height: 42px;
+
   border: 0;
   border-radius: 10px;
-  background: rgba(255, 92, 92, 0.15);
+
+  background:
+    rgba(255, 92, 92, 0.15);
+
   color: var(--danger);
+
   font-size: 20px;
   font-weight: 700;
+
   cursor: pointer;
 }
 
@@ -445,19 +715,33 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin-top: 12px;
 }
 
-/* ダウンセット */
+/* =========================
+   ダウンセット
+========================= */
 
 .add-subset-button {
   justify-self: start;
+
   min-height: 38px;
+
   margin-left: 40px;
-  border: 1px dashed rgba(251, 146, 60, 0.55);
+
+  border:
+    1px dashed
+    rgba(251, 146, 60, 0.55);
+
   border-radius: 10px;
+
   padding: 8px 12px;
-  background: rgba(234, 88, 12, 0.08);
+
+  background:
+    rgba(234, 88, 12, 0.08);
+
   color: var(--primary-light);
+
   font-size: 13px;
   font-weight: 700;
+
   cursor: pointer;
 }
 
@@ -468,38 +752,54 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .subset-row {
   display: grid;
-  grid-template-columns: 32px 1fr;
+
+  grid-template-columns:
+    32px 1fr;
+
   gap: 8px;
   margin-left: 28px;
 }
 
 .subset-branch {
   padding-top: 11px;
+
   color: var(--primary-light);
+
   font-size: 20px;
   text-align: right;
 }
 
 .subset-main {
   padding: 10px;
-  border-left: 3px solid var(--primary);
+
+  border-left:
+    3px solid var(--primary);
+
   border-radius: 10px;
-  background: rgba(234, 88, 12, 0.07);
+
+  background:
+    rgba(234, 88, 12, 0.07);
 }
 
 .subset-heading {
   display: flex;
   align-items: center;
+
   gap: 8px;
   margin-bottom: 8px;
 }
 
 .subset-badge {
   display: inline-flex;
+
   border-radius: 999px;
   padding: 4px 8px;
-  background: rgba(234, 88, 12, 0.16);
+
+  background:
+    rgba(234, 88, 12, 0.16);
+
   color: var(--primary-light);
+
   font-size: 12px;
   font-weight: 750;
 }
@@ -511,16 +811,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .subset-inputs {
   display: grid;
-  grid-template-columns: 1fr 1fr 32px;
+
+  grid-template-columns:
+    1fr 1fr 32px;
+
   gap: 8px;
   align-items: end;
 }
+
+/* =========================
+   保存
+========================= */
 
 .submit-card {
   margin-bottom: 0;
 }
 
-/* カレンダー */
+/* =========================
+   カレンダー
+========================= */
 
 .calendar-card {
   overflow: hidden;
@@ -528,7 +837,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .calendar-header {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+
+  grid-template-columns:
+    auto 1fr auto;
+
   gap: 10px;
   align-items: center;
 }
@@ -541,17 +853,24 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .calendar-nav-button {
   min-height: 44px;
+
   border: 1px solid var(--line);
   border-radius: 12px;
+
   background: var(--input);
   color: var(--text);
+
   padding: 9px;
+
   cursor: pointer;
 }
 
 .calendar-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+
+  grid-template-columns:
+    1fr 1fr;
+
   gap: 8px;
   margin: 14px 0;
 }
@@ -559,8 +878,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .plan-form {
   margin-bottom: 14px;
   padding: 14px;
+
   border: 1px solid var(--line);
   border-radius: 16px;
+
   background: var(--card-2);
 }
 
@@ -575,34 +896,48 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .calendar-weekdays,
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+
+  grid-template-columns:
+    repeat(7, 1fr);
+
   gap: 4px;
 }
 
 .calendar-weekdays {
   margin-bottom: 6px;
+
   color: var(--muted);
+
   font-size: 12px;
   text-align: center;
 }
 
 .calendar-day {
   min-height: 66px;
+
   border: 1px solid var(--line);
   border-radius: 10px;
+
   background: var(--input);
   color: var(--text);
+
   padding: 6px;
+
   text-align: left;
   cursor: pointer;
 }
 
 .calendar-day.empty {
   opacity: 0.3;
+  cursor: default;
 }
 
 .calendar-day.today {
   border-color: var(--primary);
+
+  box-shadow:
+    inset 0 0 0 1px
+    var(--primary);
 }
 
 .calendar-day-number {
@@ -620,11 +955,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   min-width: 20px;
   height: 20px;
+
   border: 1px solid var(--primary);
   border-radius: 999px;
+
   color: var(--primary-light);
+
   font-size: 10px;
   font-weight: 700;
 }
@@ -637,8 +976,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .calendar-legend {
   display: flex;
   gap: 12px;
+
   margin-top: 14px;
+
   color: var(--muted);
+
   font-size: 12px;
 }
 
@@ -651,6 +993,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .legend-sample {
   width: 18px;
   height: 14px;
+
   border-radius: 999px;
 }
 
@@ -662,31 +1005,48 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: 1px solid var(--primary);
 }
 
+/* =========================
+   スマートフォン
+========================= */
+
 @media (max-width: 520px) {
   .app {
     padding:
       12px 12px
-      max(32px, env(safe-area-inset-bottom));
+      max(
+        32px,
+        env(safe-area-inset-bottom)
+      );
   }
 
   .card {
     padding: 14px;
   }
 
+  .exercise-master-actions {
+    grid-template-columns: 1fr;
+  }
+
   .exercise-header {
     flex-direction: column;
   }
 
-  .picker-item {
-    grid-template-columns: auto 1fr;
+  .exercise-actions {
+    width: 100%;
   }
 
-  .picker-category {
-    grid-column: 2;
+  .exercise-actions button {
+    flex: 1;
+  }
+
+  .picker-item {
+    grid-template-columns:
+      24px 30px 1fr;
   }
 
   .set-row {
-    grid-template-columns: 30px 1fr 1fr;
+    grid-template-columns:
+      30px 1fr 1fr;
   }
 
   .result-toggle {
@@ -700,7 +1060,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   .subset-row {
     margin-left: 12px;
-    grid-template-columns: 24px 1fr;
+
+    grid-template-columns:
+      24px 1fr;
   }
 
   .add-subset-button {
@@ -715,10 +1077,64 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     min-height: 58px;
     padding: 5px;
   }
+
+  .calendar-header {
+    grid-template-columns:
+      68px 1fr 68px;
+  }
+
+  .calendar-nav-button {
+    padding: 7px;
+    font-size: 13px;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* =========================
+   小さいスマートフォン
+========================= */
+
+@media (max-width: 380px) {
+  .app {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .set-row {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .set-row input {
+    padding: 8px 6px;
+  }
+
+  .picker-item {
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .calendar-day {
+    min-height: 54px;
+    padding: 4px;
+  }
+}
+
+/* =========================
+   モーション軽減
+========================= */
+
+@media (
+  prefers-reduced-motion: reduce
+) {
   * {
-    scroll-behavior: auto !important;
+    scroll-behavior:
+      auto !important;
+
+    transition:
+      none !important;
   }
 }
