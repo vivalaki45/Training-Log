@@ -1,56 +1,129 @@
 const GAS_WEB_APP_URL =
   'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
 
-const DRAFT_STORAGE_KEY = 'workoutLoggerDraftV1';
+const DRAFT_STORAGE_KEY =
+  'workoutLoggerDraftV2';
 
-const $ = (id) => document.getElementById(id);
+const $ = (id) =>
+  document.getElementById(id);
 
-const workoutDateInput = $('workoutDate');
-const bodyPartSelect = $('bodyPart');
-const sessionMemoInput = $('sessionMemo');
+/* =========================
+   DOM
+========================= */
 
-const loadExercisesButton = $('loadExercisesButton');
+const workoutDateInput =
+  $('workoutDate');
+
+const bodyPartSelect =
+  $('bodyPart');
+
+const sessionMemoInput =
+  $('sessionMemo');
+
+const loadExercisesButton =
+  $('loadExercisesButton');
+
+const createExerciseButton =
+  $('createExerciseButton');
+
+const archiveExercisesButton =
+  $('archiveExercisesButton');
+
 const addSelectedExercisesButton =
   $('addSelectedExercisesButton');
 
-const exercisePicker = $('exercisePicker');
-const exerciseList = $('exerciseList');
-const statusMessage = $('statusMessage');
+const exercisePicker =
+  $('exercisePicker');
 
-const submitButton = $('submitButton');
-const submitMessage = $('submitMessage');
+const exerciseList =
+  $('exerciseList');
 
-const pickerItemTemplate = $('pickerItemTemplate');
-const exerciseTemplate = $('exerciseTemplate');
-const setTemplate = $('setTemplate');
-const subsetTemplate = $('subsetTemplate');
+const statusMessage =
+  $('statusMessage');
+
+const submitButton =
+  $('submitButton');
+
+const submitMessage =
+  $('submitMessage');
+
+const pickerItemTemplate =
+  $('pickerItemTemplate');
+
+const exerciseTemplate =
+  $('exerciseTemplate');
+
+const setTemplate =
+  $('setTemplate');
+
+const subsetTemplate =
+  $('subsetTemplate');
 
 const tabButtons =
-  document.querySelectorAll('.tab-button');
+  document.querySelectorAll(
+    '.tab-button'
+  );
 
-const logTab = $('logTab');
-const calendarTab = $('calendarTab');
+const logTab =
+  $('logTab');
 
-const prevMonthButton = $('prevMonthButton');
-const nextMonthButton = $('nextMonthButton');
-const todayMonthButton = $('todayMonthButton');
+const calendarTab =
+  $('calendarTab');
 
-const calendarTitle = $('calendarTitle');
-const calendarStatus = $('calendarStatus');
-const calendarGrid = $('calendarGrid');
+const prevMonthButton =
+  $('prevMonthButton');
+
+const nextMonthButton =
+  $('nextMonthButton');
+
+const todayMonthButton =
+  $('todayMonthButton');
+
+const calendarTitle =
+  $('calendarTitle');
+
+const calendarStatus =
+  $('calendarStatus');
+
+const calendarGrid =
+  $('calendarGrid');
 
 const togglePlanFormButton =
   $('togglePlanFormButton');
 
-const planForm = $('planForm');
-const planDateInput = $('planDate');
-const planBodyPartSelect = $('planBodyPart');
-const planMemoInput = $('planMemo');
-const savePlanButton = $('savePlanButton');
-const planMessage = $('planMessage');
+const planForm =
+  $('planForm');
+
+const planDateInput =
+  $('planDate');
+
+const planBodyPartSelect =
+  $('planBodyPart');
+
+const planMemoInput =
+  $('planMemo');
+
+const savePlanButton =
+  $('savePlanButton');
+
+const planMessage =
+  $('planMessage');
+
+/* =========================
+   状態
+========================= */
 
 let loadedExercises = [];
-let currentCalendarDate = new Date();
+
+/*
+ * 種目をチェックした順番を保存する。
+ * チェックボックスの画面上の順番ではなく、
+ * 実際に選択した順番になる。
+ */
+let selectedExerciseIds = [];
+
+let currentCalendarDate =
+  new Date();
 
 let isRestoringDraft = false;
 let isClearingAfterSave = false;
@@ -61,14 +134,28 @@ let draftSaveTimer = null;
 ========================= */
 
 function init() {
-  const today = getTodayIsoDate();
+  const today =
+    getTodayIsoDate();
 
-  workoutDateInput.value = today;
-  planDateInput.value = today;
+  workoutDateInput.value =
+    today;
+
+  planDateInput.value =
+    today;
 
   loadExercisesButton.addEventListener(
     'click',
     handleLoadExercises
+  );
+
+  createExerciseButton.addEventListener(
+    'click',
+    handleCreateExercise
+  );
+
+  archiveExercisesButton.addEventListener(
+    'click',
+    handleArchiveExercises
   );
 
   addSelectedExercisesButton.addEventListener(
@@ -82,35 +169,53 @@ function init() {
   );
 
   tabButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      switchTab(button.dataset.tab);
-    });
-  });
-
-  prevMonthButton.addEventListener('click', () => {
-    currentCalendarDate = new Date(
-      currentCalendarDate.getFullYear(),
-      currentCalendarDate.getMonth() - 1,
-      1
+    button.addEventListener(
+      'click',
+      () => {
+        switchTab(
+          button.dataset.tab
+        );
+      }
     );
-
-    loadCalendar();
   });
 
-  nextMonthButton.addEventListener('click', () => {
-    currentCalendarDate = new Date(
-      currentCalendarDate.getFullYear(),
-      currentCalendarDate.getMonth() + 1,
-      1
-    );
+  prevMonthButton.addEventListener(
+    'click',
+    () => {
+      currentCalendarDate =
+        new Date(
+          currentCalendarDate.getFullYear(),
+          currentCalendarDate.getMonth() - 1,
+          1
+        );
 
-    loadCalendar();
-  });
+      loadCalendar();
+    }
+  );
 
-  todayMonthButton.addEventListener('click', () => {
-    currentCalendarDate = new Date();
-    loadCalendar();
-  });
+  nextMonthButton.addEventListener(
+    'click',
+    () => {
+      currentCalendarDate =
+        new Date(
+          currentCalendarDate.getFullYear(),
+          currentCalendarDate.getMonth() + 1,
+          1
+        );
+
+      loadCalendar();
+    }
+  );
+
+  todayMonthButton.addEventListener(
+    'click',
+    () => {
+      currentCalendarDate =
+        new Date();
+
+      loadCalendar();
+    }
+  );
 
   togglePlanFormButton.addEventListener(
     'click',
@@ -158,22 +263,35 @@ function switchTab(tabName) {
 ========================= */
 
 function getTodayIsoDate() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
+  const now =
+    new Date();
 
-  const localDate = new Date(
-    now.getTime() - offset * 60 * 1000
-  );
+  const offset =
+    now.getTimezoneOffset();
 
-  return localDate.toISOString().slice(0, 10);
+  const localDate =
+    new Date(
+      now.getTime() -
+      offset * 60 * 1000
+    );
+
+  return localDate
+    .toISOString()
+    .slice(0, 10);
 }
 
 function setStatus(text) {
-  statusMessage.textContent = text || '';
+  statusMessage.textContent =
+    text || '';
 }
 
-function setMessage(element, text, type) {
-  element.textContent = text || '';
+function setMessage(
+  element,
+  text,
+  type
+) {
+  element.textContent =
+    text || '';
 
   element.className =
     element === submitMessage
@@ -185,18 +303,34 @@ function setMessage(element, text, type) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 /* =========================
    GAS通信
 ========================= */
 
 async function getFromGas(params) {
-  const url = new URL(GAS_WEB_APP_URL);
+  const url =
+    new URL(GAS_WEB_APP_URL);
 
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
+  Object.entries(params).forEach(
+    ([key, value]) => {
+      url.searchParams.set(
+        key,
+        value
+      );
+    }
+  );
 
-  const response = await fetch(url);
+  const response =
+    await fetch(url);
 
   if (!response.ok) {
     throw new Error(
@@ -204,11 +338,13 @@ async function getFromGas(params) {
     );
   }
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   if (!data.ok) {
     throw new Error(
-      data.error || 'GAS API error'
+      data.error ||
+      'GAS API error'
     );
   }
 
@@ -216,17 +352,21 @@ async function getFromGas(params) {
 }
 
 async function postToGas(payload) {
-  const response = await fetch(
-    GAS_WEB_APP_URL,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type':
-          'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify(payload)
-    }
-  );
+  const response =
+    await fetch(
+      GAS_WEB_APP_URL,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'text/plain;charset=utf-8'
+        },
+
+        body:
+          JSON.stringify(payload)
+      }
+    );
 
   if (!response.ok) {
     throw new Error(
@@ -234,11 +374,13 @@ async function postToGas(payload) {
     );
   }
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   if (!data.ok) {
     throw new Error(
-      data.error || 'GAS API error'
+      data.error ||
+      'GAS API error'
     );
   }
 
@@ -250,47 +392,76 @@ async function postToGas(payload) {
 ========================= */
 
 async function handleLoadExercises() {
-  const bodyPart = bodyPartSelect.value;
+  const bodyPart =
+    bodyPartSelect.value;
 
   if (!bodyPart) {
-    alert('部位を選択してください。');
+    alert(
+      '部位を選択してください。'
+    );
+
     return;
   }
 
-  setStatus('種目を読み込み中...');
-  setMessage(submitMessage, '', '');
+  setStatus(
+    '種目を読み込み中...'
+  );
+
+  setMessage(
+    submitMessage,
+    '',
+    ''
+  );
 
   exercisePicker.innerHTML = '';
   exerciseList.innerHTML = '';
 
   loadedExercises = [];
+  selectedExerciseIds = [];
 
   submitButton.disabled = true;
-  addSelectedExercisesButton.disabled = true;
+
+  addSelectedExercisesButton.disabled =
+    true;
+
+  archiveExercisesButton.disabled =
+    true;
 
   try {
-    const data = await getFromGas({
-      action: 'getExercisesWithLastWorkout',
-      bodyPart: bodyPart
-    });
+    const data =
+      await getFromGas({
+        action:
+          'getExercisesWithLastWorkout',
 
-    loadedExercises = data.exercises || [];
+        bodyPart:
+          bodyPart
+      });
 
-    if (loadedExercises.length === 0) {
+    loadedExercises =
+      data.exercises || [];
+
+    if (
+      loadedExercises.length === 0
+    ) {
       setStatus(
         'この部位に登録されている種目がありません。'
       );
+
       return;
     }
 
-    renderExercisePicker(loadedExercises);
+    renderExercisePicker(
+      loadedExercises
+    );
 
     setStatus(
       `${bodyPart}の種目を読み込みました。` +
       '今日やる種目を選んでください。'
     );
 
-    addSelectedExercisesButton.disabled = false;
+    addSelectedExercisesButton.disabled =
+      false;
+
     saveDraftDebounced();
 
   } catch (error) {
@@ -307,25 +478,45 @@ async function handleLoadExercises() {
    種目選択
 ========================= */
 
-function renderExercisePicker(exercises) {
+function renderExercisePicker(
+  exercises
+) {
   exercisePicker.innerHTML = '';
 
   exercises.forEach((exercise) => {
     const node =
-      pickerItemTemplate.content.cloneNode(true);
+      pickerItemTemplate.content
+        .cloneNode(true);
 
     const item =
-      node.querySelector('.picker-item');
+      node.querySelector(
+        '.picker-item'
+      );
 
     const checkbox =
-      node.querySelector('.picker-checkbox');
+      node.querySelector(
+        '.picker-checkbox'
+      );
 
-    item.dataset.exerciseId = exercise.id;
-    checkbox.value = exercise.id;
+    item.dataset.exerciseId =
+      exercise.id;
+
+    checkbox.value =
+      exercise.id;
+
+    /*
+     * 下書き復元時には
+     * 保存されていた選択状態を反映する。
+     */
+    checkbox.checked =
+      selectedExerciseIds.includes(
+        exercise.id
+      );
 
     node.querySelector(
       '.picker-name'
-    ).textContent = exercise.name;
+    ).textContent =
+      exercise.name;
 
     node.querySelector(
       '.picker-category'
@@ -338,38 +529,134 @@ function renderExercisePicker(exercises) {
 
     checkbox.addEventListener(
       'change',
-      saveDraftDebounced
+      () => {
+        handlePickerChange(
+          exercise.id,
+          checkbox.checked
+        );
+      }
     );
 
-    exercisePicker.appendChild(node);
+    exercisePicker.appendChild(
+      node
+    );
+  });
+
+  refreshPickerOrder();
+  updatePickerButtons();
+}
+
+function handlePickerChange(
+  exerciseId,
+  checked
+) {
+  if (checked) {
+    if (
+      !selectedExerciseIds.includes(
+        exerciseId
+      )
+    ) {
+      /*
+       * チェックした時点で末尾へ追加。
+       * これが選択順になる。
+       */
+      selectedExerciseIds.push(
+        exerciseId
+      );
+    }
+
+  } else {
+    selectedExerciseIds =
+      selectedExerciseIds.filter(
+        (id) =>
+          id !== exerciseId
+      );
+  }
+
+  refreshPickerOrder();
+  updatePickerButtons();
+  saveDraftDebounced();
+}
+
+function refreshPickerOrder() {
+  exercisePicker.querySelectorAll(
+    '.picker-item'
+  ).forEach((item) => {
+    const exerciseId =
+      item.dataset.exerciseId;
+
+    const order =
+      selectedExerciseIds.indexOf(
+        exerciseId
+      );
+
+    const orderElement =
+      item.querySelector(
+        '.picker-order'
+      );
+
+    if (!orderElement) {
+      return;
+    }
+
+    orderElement.textContent =
+      order >= 0
+        ? String(order + 1)
+        : '';
+
+    item.classList.toggle(
+      'selected',
+      order >= 0
+    );
   });
 }
 
+function updatePickerButtons() {
+  const hasSelection =
+    selectedExerciseIds.length > 0;
+
+  addSelectedExercisesButton.disabled =
+    !hasSelection;
+
+  archiveExercisesButton.disabled =
+    !hasSelection;
+}
+
 function handleAddSelectedExercises() {
-  const checked =
-    exercisePicker.querySelectorAll(
-      '.picker-checkbox:checked'
+  if (
+    selectedExerciseIds.length === 0
+  ) {
+    alert(
+      '今日やる種目を選んでください。'
     );
 
-  if (checked.length === 0) {
-    alert('今日やる種目を選んでください。');
     return;
   }
 
-  checked.forEach((checkbox) => {
-    const exercise =
-      loadedExercises.find(
-        (item) =>
-          item.id === checkbox.value
-      );
+  /*
+   * DOM上のチェックボックス順ではなく、
+   * selectedExerciseIdsの順に追加する。
+   */
+  selectedExerciseIds.forEach(
+    (exerciseId) => {
+      const exercise =
+        loadedExercises.find(
+          (item) =>
+            item.id === exerciseId
+        );
 
-    if (
-      exercise &&
-      !isExerciseAlreadyAdded(exercise.id)
-    ) {
-      renderExerciseCard(exercise);
+      if (
+        exercise &&
+        !isExerciseAlreadyAdded(
+          exercise.id
+        )
+      ) {
+        renderExerciseCard(
+          exercise
+        );
+      }
     }
-  });
+  );
 
   submitButton.disabled =
     !exerciseList.querySelector(
@@ -379,12 +666,193 @@ function handleAddSelectedExercises() {
   saveDraftDebounced();
 }
 
-function isExerciseAlreadyAdded(exerciseId) {
+function isExerciseAlreadyAdded(
+  exerciseId
+) {
   return Boolean(
     exerciseList.querySelector(
-      `.exercise-card[data-exercise-id="${exerciseId}"]`
+      `.exercise-card[data-exercise-id="${CSS.escape(exerciseId)}"]`
     )
   );
+}
+
+/* =========================
+   種目マスター追加
+========================= */
+
+async function handleCreateExercise() {
+  const bodyPart =
+    bodyPartSelect.value;
+
+  if (!bodyPart) {
+    alert(
+      '先に部位を選択してください。'
+    );
+
+    return;
+  }
+
+  const name =
+    prompt(
+      '新しい種目名を入力してください。'
+    );
+
+  if (!name?.trim()) {
+    return;
+  }
+
+  const duplicate =
+    loadedExercises.some(
+      (exercise) =>
+        exercise.name.trim() ===
+        name.trim()
+    );
+
+  if (duplicate) {
+    alert(
+      '同じ名前の種目がすでにあります。'
+    );
+
+    return;
+  }
+
+  const category =
+    prompt(
+      'カテゴリーを入力してください。\n' +
+      '例：バーベル、ダンベル、マシン',
+      ''
+    );
+
+  createExerciseButton.disabled =
+    true;
+
+  setStatus(
+    '新しい種目を追加中...'
+  );
+
+  try {
+    await postToGas({
+      action:
+        'createExercise',
+
+      name:
+        name.trim(),
+
+      bodyPart:
+        bodyPart,
+
+      category:
+        String(
+          category || ''
+        ).trim()
+    });
+
+    setStatus(
+      `${name.trim()}を追加しました。`
+    );
+
+    await handleLoadExercises();
+
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      '種目の追加に失敗しました: ' +
+      error.message
+    );
+
+  } finally {
+    createExerciseButton.disabled =
+      false;
+  }
+}
+
+/* =========================
+   種目マスター削除・非表示
+========================= */
+
+async function handleArchiveExercises() {
+  if (
+    selectedExerciseIds.length === 0
+  ) {
+    alert(
+      '削除する種目を選択してください。'
+    );
+
+    return;
+  }
+
+  const selectedNames =
+    selectedExerciseIds
+      .map((exerciseId) => {
+        return loadedExercises.find(
+          (exercise) =>
+            exercise.id ===
+            exerciseId
+        )?.name;
+      })
+      .filter(Boolean);
+
+  const shouldArchive =
+    confirm(
+      '次の種目を削除しますか？\n\n' +
+      selectedNames.join('\n') +
+      '\n\n過去の記録は残ります。'
+    );
+
+  if (!shouldArchive) {
+    return;
+  }
+
+  archiveExercisesButton.disabled =
+    true;
+
+  createExerciseButton.disabled =
+    true;
+
+  addSelectedExercisesButton.disabled =
+    true;
+
+  setStatus(
+    '選択した種目を削除中...'
+  );
+
+  try {
+    for (
+      const exerciseId
+      of selectedExerciseIds
+    ) {
+      await postToGas({
+        action:
+          'archiveExercise',
+
+        exerciseId:
+          exerciseId
+      });
+    }
+
+    selectedExerciseIds = [];
+
+    setStatus(
+      '選択した種目を削除しました。'
+    );
+
+    await handleLoadExercises();
+
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      '種目の削除に失敗しました: ' +
+      error.message
+    );
+
+  } finally {
+    createExerciseButton.disabled =
+      false;
+
+    updatePickerButtons();
+  }
 }
 
 /* =========================
@@ -396,20 +864,29 @@ function renderExerciseCard(
   savedExerciseData
 ) {
   const node =
-    exerciseTemplate.content.cloneNode(true);
+    exerciseTemplate.content
+      .cloneNode(true);
 
   const card =
-    node.querySelector('.exercise-card');
+    node.querySelector(
+      '.exercise-card'
+    );
 
   const setsContainer =
-    node.querySelector('.sets-container');
+    node.querySelector(
+      '.sets-container'
+    );
 
-  card.dataset.exerciseId = exercise.id;
-  card.dataset.exerciseName = exercise.name;
+  card.dataset.exerciseId =
+    exercise.id;
+
+  card.dataset.exerciseName =
+    exercise.name;
 
   node.querySelector(
     '.exercise-name'
-  ).textContent = exercise.name;
+  ).textContent =
+    exercise.name;
 
   node.querySelector(
     '.exercise-category'
@@ -428,8 +905,15 @@ function renderExerciseCard(
     );
 
   const memoInput =
-    node.querySelector('.exercise-memo');
+    node.querySelector(
+      '.exercise-memo'
+    );
 
+  /*
+   * 前回メモは上部に表示する。
+   * 今回のメモ欄には自動入力せず、
+   * 新しい内容を入力できるようにする。
+   */
   memoInput.value =
     savedExerciseData?.memo || '';
 
@@ -454,7 +938,11 @@ function renderExerciseCard(
     });
 
   } else {
-    for (let index = 0; index < 3; index += 1) {
+    for (
+      let index = 0;
+      index < 3;
+      index += 1
+    ) {
       addSetBlock(
         setsContainer,
         {
@@ -469,76 +957,92 @@ function renderExerciseCard(
 
   node.querySelector(
     '.add-set-button'
-  ).addEventListener('click', () => {
-    addSetBlock(
-      setsContainer,
-      {
-        weight: '',
-        reps: '',
-        success: true,
-        subsets: []
-      }
-    );
+  ).addEventListener(
+    'click',
+    () => {
+      addSetBlock(
+        setsContainer,
+        {
+          weight: '',
+          reps: '',
+          success: true,
+          subsets: []
+        }
+      );
 
-    saveDraftDebounced();
-  });
+      saveDraftDebounced();
+    }
+  );
 
   node.querySelector(
     '.move-up-button'
-  ).addEventListener('click', () => {
-    const previous =
-      card.previousElementSibling;
+  ).addEventListener(
+    'click',
+    () => {
+      const previous =
+        card.previousElementSibling;
 
-    if (previous) {
-      exerciseList.insertBefore(
-        card,
-        previous
-      );
+      if (previous) {
+        exerciseList.insertBefore(
+          card,
+          previous
+        );
+      }
+
+      saveDraftDebounced();
     }
-
-    saveDraftDebounced();
-  });
+  );
 
   node.querySelector(
     '.move-down-button'
-  ).addEventListener('click', () => {
-    const next =
-      card.nextElementSibling;
+  ).addEventListener(
+    'click',
+    () => {
+      const next =
+        card.nextElementSibling;
 
-    if (next) {
-      exerciseList.insertBefore(
-        next,
-        card
-      );
+      if (next) {
+        exerciseList.insertBefore(
+          next,
+          card
+        );
+      }
+
+      saveDraftDebounced();
     }
-
-    saveDraftDebounced();
-  });
+  );
 
   node.querySelector(
     '.remove-exercise-button'
-  ).addEventListener('click', () => {
-    card.remove();
+  ).addEventListener(
+    'click',
+    () => {
+      card.remove();
 
-    submitButton.disabled =
-      !exerciseList.querySelector(
-        '.exercise-card'
-      );
+      submitButton.disabled =
+        !exerciseList.querySelector(
+          '.exercise-card'
+        );
 
-    saveDraftDebounced();
-  });
+      saveDraftDebounced();
+    }
+  );
 
   exerciseList.appendChild(node);
 }
 
 /* =========================
-   直近記録
+   直近記録・前回メモ
 ========================= */
 
-function renderLastWorkoutHtml(lastWorkout) {
+function renderLastWorkoutHtml(
+  lastWorkout
+) {
   if (
     !lastWorkout ||
-    !Array.isArray(lastWorkout.sets) ||
+    !Array.isArray(
+      lastWorkout.sets
+    ) ||
     lastWorkout.sets.length === 0
   ) {
     return (
@@ -548,45 +1052,130 @@ function renderLastWorkoutHtml(lastWorkout) {
     );
   }
 
-  const lines = lastWorkout.sets
-    .map((set) => {
-      const downSet = isDownSet(set);
+  const previousMemo =
+    getPreviousExerciseMemo(
+      lastWorkout
+    );
 
-      const label = downSet
-        ? `${formatSetNo(set.setNo)} ダウン`
-        : `${set.setNo}set`;
+  const lines =
+    lastWorkout.sets
+      .map((set) => {
+        const downSet =
+          isDownSet(set);
 
-      const mark =
-        set.success === false
-          ? 'FAIL'
-          : 'GOOD';
+        const label =
+          downSet
+            ? `${formatSetNo(
+                set.setNo
+              )} ダウン`
+            : `${set.setNo}set`;
 
-      const failClass =
-        set.success === false
-          ? ' last-set-fail'
-          : '';
+        const mark =
+          set.success === false
+            ? 'FAIL'
+            : 'GOOD';
 
-      return `
-        <div class="last-set-line${failClass}">
-          <span class="last-set-label">
-            ${label}:
-          </span>
-          <span>
-            ${set.weight ?? ''}kg ×
-            ${set.reps ?? ''}回
-            ${mark}
-          </span>
+        const failClass =
+          set.success === false
+            ? ' last-set-fail'
+            : '';
+
+        return `
+          <div class="last-set-line${failClass}">
+            <span class="last-set-label">
+              ${escapeHtml(label)}:
+            </span>
+
+            <span>
+              ${escapeHtml(
+                set.weight ?? ''
+              )}kg ×
+              ${escapeHtml(
+                set.reps ?? ''
+              )}回
+              ${mark}
+            </span>
+          </div>
+        `;
+      })
+      .join('');
+
+  const memoHtml =
+    previousMemo
+      ? `
+        <div class="previous-exercise-memo">
+          <div class="previous-memo-label">
+            前回の種目メモ
+          </div>
+
+          <div class="previous-memo-text">
+            ${escapeHtml(
+              previousMemo
+            )}
+          </div>
+        </div>
+      `
+      : `
+        <div class="previous-exercise-memo empty">
+          前回の種目メモなし
         </div>
       `;
-    })
-    .join('');
 
   return `
     <div class="last-workout-date">
-      日付：${lastWorkout.lastDate || ''}
+      日付：${escapeHtml(
+        lastWorkout.lastDate || ''
+      )}
     </div>
-    ${lines}
+
+    <div class="last-workout-sets">
+      ${lines}
+    </div>
+
+    ${memoHtml}
   `;
+}
+
+function getPreviousExerciseMemo(
+  lastWorkout
+) {
+  if (
+    !lastWorkout ||
+    !Array.isArray(
+      lastWorkout.sets
+    )
+  ) {
+    return '';
+  }
+
+  const memoSet =
+    lastWorkout.sets.find(
+      (set) => {
+        const memo =
+          cleanExerciseMemo(
+            set.memo
+          );
+
+        return Boolean(memo);
+      }
+    );
+
+  if (!memoSet) {
+    return '';
+  }
+
+  return cleanExerciseMemo(
+    memoSet.memo
+  );
+}
+
+function cleanExerciseMemo(memo) {
+  return String(memo || '')
+    .replaceAll(
+      '【ダウンセット】',
+      ''
+    )
+    .trim();
 }
 
 function isDownSet(set) {
@@ -595,25 +1184,35 @@ function isDownSet(set) {
       Number(set.setNo)
     ) ||
     String(set.memo || '')
-      .includes('【ダウンセット】')
+      .includes(
+        '【ダウンセット】'
+      )
   );
 }
 
 function formatSetNo(setNo) {
-  const number = Number(setNo);
-  const parent = Math.floor(number);
+  const number =
+    Number(setNo);
 
-  const child = Math.round(
-    (number - parent) * 10
-  );
+  const parent =
+    Math.floor(number);
+
+  const child =
+    Math.round(
+      (number - parent) * 10
+    );
 
   return `${parent}-${child || 1}`;
 }
 
-function groupPreviousSets(lastWorkout) {
+function groupPreviousSets(
+  lastWorkout
+) {
   if (
     !lastWorkout ||
-    !Array.isArray(lastWorkout.sets)
+    !Array.isArray(
+      lastWorkout.sets
+    )
   ) {
     return [];
   }
@@ -621,52 +1220,75 @@ function groupPreviousSets(lastWorkout) {
   const normalSets = [];
   const setMap = {};
 
-  lastWorkout.sets.forEach((set) => {
-    const setNumber =
-      Number(set.setNo) || 1;
+  lastWorkout.sets.forEach(
+    (set) => {
+      const setNumber =
+        Number(set.setNo) || 1;
 
-    const parentNumber =
-      Math.floor(setNumber);
+      const parentNumber =
+        Math.floor(setNumber);
 
-    const childNumber =
-      Math.round(
-        (setNumber - parentNumber) * 10
-      );
+      const childNumber =
+        Math.round(
+          (
+            setNumber -
+            parentNumber
+          ) * 10
+        );
 
-    if (
-      childNumber > 0 ||
-      isDownSet(set)
-    ) {
-      if (!setMap[parentNumber]) {
-        const emptyParent = {
-          weight: '',
-          reps: '',
-          success: true,
+      if (
+        childNumber > 0 ||
+        isDownSet(set)
+      ) {
+        if (!setMap[parentNumber]) {
+          const emptyParent = {
+            weight: '',
+            reps: '',
+            success: true,
+            subsets: []
+          };
+
+          normalSets.push(
+            emptyParent
+          );
+
+          setMap[parentNumber] =
+            emptyParent;
+        }
+
+        setMap[
+          parentNumber
+        ].subsets.push({
+          weight:
+            set.weight ?? '',
+
+          reps:
+            set.reps ?? ''
+        });
+
+      } else {
+        const parentSet = {
+          weight:
+            set.weight ?? '',
+
+          reps:
+            set.reps ?? '',
+
+          success:
+            set.success !== false,
+
           subsets: []
         };
 
-        normalSets.push(emptyParent);
-        setMap[parentNumber] = emptyParent;
+        normalSets.push(
+          parentSet
+        );
+
+        setMap[parentNumber] =
+          parentSet;
       }
-
-      setMap[parentNumber].subsets.push({
-        weight: set.weight ?? '',
-        reps: set.reps ?? ''
-      });
-
-    } else {
-      const parentSet = {
-        weight: set.weight ?? '',
-        reps: set.reps ?? '',
-        success:
-          set.success !== false,
-        subsets: []
-      };
-
-      normalSets.push(parentSet);
-      setMap[parentNumber] = parentSet;
     }
-  });
+  );
 
   return normalSets;
 }
@@ -680,19 +1302,28 @@ function addSetBlock(
   initialValue = {}
 ) {
   const node =
-    setTemplate.content.cloneNode(true);
+    setTemplate.content
+      .cloneNode(true);
 
   const block =
-    node.querySelector('.set-block');
+    node.querySelector(
+      '.set-block'
+    );
 
   const row =
-    node.querySelector('.set-row');
+    node.querySelector(
+      '.set-row'
+    );
 
   const weightInput =
-    node.querySelector('.set-weight');
+    node.querySelector(
+      '.set-weight'
+    );
 
   const repsInput =
-    node.querySelector('.set-reps');
+    node.querySelector(
+      '.set-reps'
+    );
 
   const subsetsContainer =
     node.querySelector(
@@ -710,15 +1341,19 @@ function addSetBlock(
       ? 'false'
       : 'true';
 
-  [weightInput, repsInput]
-    .forEach((input) => {
-      enableSelectAllOnFocus(input);
+  [
+    weightInput,
+    repsInput
+  ].forEach((input) => {
+    enableSelectAllOnFocus(
+      input
+    );
 
-      input.addEventListener(
-        'input',
-        saveDraftDebounced
-      );
-    });
+    input.addEventListener(
+      'input',
+      saveDraftDebounced
+    );
+  });
 
   updateResultButtons(row);
 
@@ -731,7 +1366,10 @@ function addSetBlock(
         row.dataset.success =
           button.dataset.success;
 
-        updateResultButtons(row);
+        updateResultButtons(
+          row
+        );
+
         saveDraftDebounced();
       }
     );
@@ -739,37 +1377,54 @@ function addSetBlock(
 
   node.querySelector(
     '.remove-set-button'
-  ).addEventListener('click', () => {
-    block.remove();
-    refreshSetNumbers(container);
-    saveDraftDebounced();
-  });
+  ).addEventListener(
+    'click',
+    () => {
+      block.remove();
+
+      refreshSetNumbers(
+        container
+      );
+
+      saveDraftDebounced();
+    }
+  );
 
   node.querySelector(
     '.add-subset-button'
-  ).addEventListener('click', () => {
-    addSubsetRow(
-      subsetsContainer,
-      {}
-    );
+  ).addEventListener(
+    'click',
+    () => {
+      addSubsetRow(
+        subsetsContainer,
+        {}
+      );
 
-    saveDraftDebounced();
-  });
+      saveDraftDebounced();
+    }
+  );
 
   const savedSubsets =
-    Array.isArray(initialValue.subsets)
+    Array.isArray(
+      initialValue.subsets
+    )
       ? initialValue.subsets
       : [];
 
-  savedSubsets.forEach((subset) => {
-    addSubsetRow(
-      subsetsContainer,
-      subset
-    );
-  });
+  savedSubsets.forEach(
+    (subset) => {
+      addSubsetRow(
+        subsetsContainer,
+        subset
+      );
+    }
+  );
 
   container.appendChild(node);
-  refreshSetNumbers(container);
+
+  refreshSetNumbers(
+    container
+  );
 }
 
 /* =========================
@@ -781,16 +1436,23 @@ function addSubsetRow(
   initialValue = {}
 ) {
   const node =
-    subsetTemplate.content.cloneNode(true);
+    subsetTemplate.content
+      .cloneNode(true);
 
   const row =
-    node.querySelector('.subset-row');
+    node.querySelector(
+      '.subset-row'
+    );
 
   const weightInput =
-    node.querySelector('.subset-weight');
+    node.querySelector(
+      '.subset-weight'
+    );
 
   const repsInput =
-    node.querySelector('.subset-reps');
+    node.querySelector(
+      '.subset-reps'
+    );
 
   weightInput.value =
     initialValue.weight ?? '';
@@ -798,62 +1460,89 @@ function addSubsetRow(
   repsInput.value =
     initialValue.reps ?? '';
 
-  [weightInput, repsInput]
-    .forEach((input) => {
-      enableSelectAllOnFocus(input);
+  [
+    weightInput,
+    repsInput
+  ].forEach((input) => {
+    enableSelectAllOnFocus(
+      input
+    );
 
-      input.addEventListener(
-        'input',
-        saveDraftDebounced
-      );
-    });
+    input.addEventListener(
+      'input',
+      saveDraftDebounced
+    );
+  });
 
   node.querySelector(
     '.remove-subset-button'
-  ).addEventListener('click', () => {
-    row.remove();
-    refreshSubsetNumbers(container);
-    saveDraftDebounced();
-  });
+  ).addEventListener(
+    'click',
+    () => {
+      row.remove();
+
+      refreshSubsetNumbers(
+        container
+      );
+
+      saveDraftDebounced();
+    }
+  );
 
   container.appendChild(node);
-  refreshSubsetNumbers(container);
+
+  refreshSubsetNumbers(
+    container
+  );
 }
 
-function refreshSetNumbers(container) {
+function refreshSetNumbers(
+  container
+) {
   const blocks =
     container.querySelectorAll(
       ':scope > .set-block'
     );
 
-  blocks.forEach((block, index) => {
-    block.querySelector(
-      '.set-number'
-    ).textContent =
-      String(index + 1);
-  });
+  blocks.forEach(
+    (block, index) => {
+      block.querySelector(
+        '.set-number'
+      ).textContent =
+        String(index + 1);
+    }
+  );
 }
 
-function refreshSubsetNumbers(container) {
+function refreshSubsetNumbers(
+  container
+) {
   const rows =
     container.querySelectorAll(
       ':scope > .subset-row'
     );
 
-  rows.forEach((row, index) => {
-    row.querySelector(
-      '.subset-number'
-    ).textContent =
-      `${index + 1}段目`;
-  });
+  rows.forEach(
+    (row, index) => {
+      row.querySelector(
+        '.subset-number'
+      ).textContent =
+        `${index + 1}段目`;
+    }
+  );
 }
 
-function enableSelectAllOnFocus(input) {
-  input.addEventListener('focus', () => {
-    setTimeout(() => {
-      input.select();
-    }, 0);
-  });
+function enableSelectAllOnFocus(
+  input
+) {
+  input.addEventListener(
+    'focus',
+    () => {
+      setTimeout(() => {
+        input.select();
+      }, 0);
+    }
+  );
 
   input.addEventListener(
     'mouseup',
@@ -874,7 +1563,8 @@ function enableSelectAllOnFocus(input) {
 
 function updateResultButtons(row) {
   const success =
-    row.dataset.success !== 'false';
+    row.dataset.success !==
+    'false';
 
   row.querySelector(
     '.result-button.success'
@@ -896,8 +1586,11 @@ function updateResultButtons(row) {
 ========================= */
 
 function collectWorkoutPayload() {
-  const date = workoutDateInput.value;
-  const bodyPart = bodyPartSelect.value;
+  const date =
+    workoutDateInput.value;
+
+  const bodyPart =
+    bodyPartSelect.value;
 
   if (!date) {
     throw new Error(
@@ -928,16 +1621,19 @@ function collectWorkoutPayload() {
 
     setBlocks.forEach(
       (block, index) => {
-        const parentSetNo = index + 1;
+        const parentSetNo =
+          index + 1;
 
-        const normalSet = readInputPair(
-          block.querySelector(
-            '.set-weight'
-          ),
-          block.querySelector(
-            '.set-reps'
-          )
-        );
+        const normalSet =
+          readInputPair(
+            block.querySelector(
+              '.set-weight'
+            ),
+
+            block.querySelector(
+              '.set-reps'
+            )
+          );
 
         if (normalSet) {
           sets.push({
@@ -947,7 +1643,8 @@ function collectWorkoutPayload() {
             exerciseName:
               card.dataset.exerciseName,
 
-            setNo: parentSetNo,
+            setNo:
+              parentSetNo,
 
             weight:
               normalSet.weight,
@@ -958,9 +1655,11 @@ function collectWorkoutPayload() {
             success:
               block.querySelector(
                 '.set-row'
-              ).dataset.success !== 'false',
+              ).dataset.success !==
+              'false',
 
-            memo: exerciseMemo
+            memo:
+              exerciseMemo
           });
         }
 
@@ -970,15 +1669,20 @@ function collectWorkoutPayload() {
           );
 
         subsets.forEach(
-          (subset, subsetIndex) => {
-            const pair = readInputPair(
-              subset.querySelector(
-                '.subset-weight'
-              ),
-              subset.querySelector(
-                '.subset-reps'
-              )
-            );
+          (
+            subset,
+            subsetIndex
+          ) => {
+            const pair =
+              readInputPair(
+                subset.querySelector(
+                  '.subset-weight'
+                ),
+
+                subset.querySelector(
+                  '.subset-reps'
+                )
+              );
 
             if (!pair) {
               return;
@@ -986,18 +1690,26 @@ function collectWorkoutPayload() {
 
             sets.push({
               exerciseId:
-                card.dataset.exerciseId,
+                card.dataset
+                  .exerciseId,
 
               exerciseName:
-                card.dataset.exerciseName,
+                card.dataset
+                  .exerciseName,
 
-              setNo: Number(
-                `${parentSetNo}.${subsetIndex + 1}`
-              ),
+              setNo:
+                Number(
+                  `${parentSetNo}.${subsetIndex + 1}`
+                ),
 
-              weight: pair.weight,
-              reps: pair.reps,
-              success: true,
+              weight:
+                pair.weight,
+
+              reps:
+                pair.reps,
+
+              success:
+                true,
 
               memo:
                 `【ダウンセット】${exerciseMemo}`
@@ -1015,16 +1727,24 @@ function collectWorkoutPayload() {
   }
 
   return {
-    date: date,
-    bodyPart: bodyPart,
+    date:
+      date,
+
+    bodyPart:
+      bodyPart,
 
     sessionName:
-      `${date.replaceAll('-', '/')} ${bodyPart}`,
+      `${date.replaceAll(
+        '-',
+        '/'
+      )} ${bodyPart}`,
 
     memo:
-      sessionMemoInput.value.trim(),
+      sessionMemoInput.value
+        .trim(),
 
-    sets: sets
+    sets:
+      sets
   };
 }
 
@@ -1052,8 +1772,11 @@ function readInputPair(
     return null;
   }
 
-  const weight = Number(weightText);
-  const reps = Number(repsText);
+  const weight =
+    Number(weightText);
+
+  const reps =
+    Number(repsText);
 
   if (
     Number.isNaN(weight) ||
@@ -1063,8 +1786,11 @@ function readInputPair(
   }
 
   return {
-    weight: weight,
-    reps: reps
+    weight:
+      weight,
+
+    reps:
+      reps
   };
 }
 
@@ -1073,15 +1799,17 @@ function readInputPair(
 ========================= */
 
 async function handleSubmitWorkout() {
-  const shouldSave = confirm(
-    'この内容でNotionに保存しますか？'
-  );
+  const shouldSave =
+    confirm(
+      'この内容でNotionに保存しますか？'
+    );
 
   if (!shouldSave) {
     return;
   }
 
-  submitButton.disabled = true;
+  submitButton.disabled =
+    true;
 
   setMessage(
     submitMessage,
@@ -1098,7 +1826,10 @@ async function handleSubmitWorkout() {
     isClearingAfterSave = true;
 
     if (draftSaveTimer) {
-      clearTimeout(draftSaveTimer);
+      clearTimeout(
+        draftSaveTimer
+      );
+
       draftSaveTimer = null;
     }
 
@@ -1128,7 +1859,9 @@ async function handleSubmitWorkout() {
       'error'
     );
 
-    submitButton.disabled = false;
+    submitButton.disabled =
+      false;
+
     saveDraftDebounced();
   }
 }
@@ -1144,9 +1877,16 @@ function resetWorkoutForm() {
   exerciseList.innerHTML = '';
 
   loadedExercises = [];
+  selectedExerciseIds = [];
 
-  addSelectedExercisesButton.disabled = true;
-  submitButton.disabled = true;
+  addSelectedExercisesButton.disabled =
+    true;
+
+  archiveExercisesButton.disabled =
+    true;
+
+  submitButton.disabled =
+    true;
 
   setStatus(
     '部位を選択して種目を読み込んでください。'
@@ -1200,25 +1940,19 @@ function saveDraftDebounced() {
   }
 
   if (draftSaveTimer) {
-    clearTimeout(draftSaveTimer);
+    clearTimeout(
+      draftSaveTimer
+    );
   }
 
-  draftSaveTimer = setTimeout(() => {
-    draftSaveTimer = null;
-    saveDraftNow();
-  }, 300);
+  draftSaveTimer =
+    setTimeout(() => {
+      draftSaveTimer = null;
+      saveDraftNow();
+    }, 300);
 }
 
 function collectDraftState() {
-  const selectedPickerIds =
-    Array.from(
-      exercisePicker.querySelectorAll(
-        '.picker-checkbox:checked'
-      )
-    ).map(
-      (checkbox) => checkbox.value
-    );
-
   const exerciseCards =
     Array.from(
       exerciseList.querySelectorAll(
@@ -1264,9 +1998,11 @@ function collectDraftState() {
             success:
               block.querySelector(
                 '.set-row'
-              ).dataset.success !== 'false',
+              ).dataset.success !==
+              'false',
 
-            subsets: subsets
+            subsets:
+              subsets
           };
         });
 
@@ -1282,7 +2018,8 @@ function collectDraftState() {
             '.exercise-memo'
           ).value,
 
-        sets: sets
+        sets:
+          sets
       };
     });
 
@@ -1302,15 +2039,21 @@ function collectDraftState() {
     loadedExercises:
       loadedExercises,
 
-    selectedPickerIds:
-      selectedPickerIds,
+    /*
+     * 選択順をそのまま保存する。
+     */
+    selectedPickerIds: [
+      ...selectedExerciseIds
+    ],
 
     exerciseCards:
       exerciseCards
   };
 }
 
-function hasMeaningfulDraftData(draft) {
+function hasMeaningfulDraftData(
+  draft
+) {
   return Boolean(
     draft.bodyPart ||
     draft.sessionMemo?.trim() ||
@@ -1332,7 +2075,9 @@ function saveDraftNow() {
 
   try {
     if (
-      hasMeaningfulDraftData(draft)
+      hasMeaningfulDraftData(
+        draft
+      )
     ) {
       localStorage.setItem(
         DRAFT_STORAGE_KEY,
@@ -1353,13 +2098,23 @@ function saveDraftNow() {
 
 function clearDraft() {
   if (draftSaveTimer) {
-    clearTimeout(draftSaveTimer);
+    clearTimeout(
+      draftSaveTimer
+    );
+
     draftSaveTimer = null;
   }
 
   try {
     localStorage.removeItem(
       DRAFT_STORAGE_KEY
+    );
+
+    /*
+     * 旧バージョンの下書きも削除する。
+     */
+    localStorage.removeItem(
+      'workoutLoggerDraftV1'
     );
 
   } catch (error) {
@@ -1375,6 +2130,9 @@ function loadDraft() {
     const text =
       localStorage.getItem(
         DRAFT_STORAGE_KEY
+      ) ||
+      localStorage.getItem(
+        'workoutLoggerDraftV1'
       );
 
     return text
@@ -1383,16 +2141,20 @@ function loadDraft() {
 
   } catch (error) {
     clearDraft();
+
     return null;
   }
 }
 
 async function restoreDraftOnOpen() {
-  const draft = loadDraft();
+  const draft =
+    loadDraft();
 
   if (
     !draft ||
-    !hasMeaningfulDraftData(draft)
+    !hasMeaningfulDraftData(
+      draft
+    )
   ) {
     return;
   }
@@ -1401,23 +2163,27 @@ async function restoreDraftOnOpen() {
     draft.savedAt
       ? new Date(
           draft.savedAt
-        ).toLocaleString('ja-JP')
+        ).toLocaleString(
+          'ja-JP'
+        )
       : '';
 
-  const shouldRestore = confirm(
-    '保存前の下書きがあります。' +
-    '復元しますか？' +
-    (
-      savedDate
-        ? `\n\n保存日時: ${savedDate}`
-        : ''
-    )
-  );
+  const shouldRestore =
+    confirm(
+      '保存前の下書きがあります。' +
+      '復元しますか？' +
+      (
+        savedDate
+          ? `\n\n保存日時: ${savedDate}`
+          : ''
+      )
+    );
 
   if (!shouldRestore) {
-    const shouldDelete = confirm(
-      'この下書きを削除しますか？'
-    );
+    const shouldDelete =
+      confirm(
+        'この下書きを削除しますか？'
+      );
 
     if (shouldDelete) {
       clearDraft();
@@ -1450,17 +2216,27 @@ async function restoreDraft(draft) {
         ? draft.loadedExercises
         : [];
 
+    selectedExerciseIds =
+      Array.isArray(
+        draft.selectedPickerIds
+      )
+        ? [
+            ...draft.selectedPickerIds
+          ]
+        : [];
+
     if (
       loadedExercises.length === 0 &&
       draft.bodyPart
     ) {
-      const data = await getFromGas({
-        action:
-          'getExercisesWithLastWorkout',
+      const data =
+        await getFromGas({
+          action:
+            'getExercisesWithLastWorkout',
 
-        bodyPart:
-          draft.bodyPart
-      });
+          bodyPart:
+            draft.bodyPart
+        });
 
       loadedExercises =
         data.exercises || [];
@@ -1473,26 +2249,22 @@ async function restoreDraft(draft) {
         loadedExercises
       );
 
-      addSelectedExercisesButton.disabled =
-        false;
+      selectedExerciseIds.forEach(
+        (exerciseId) => {
+          const checkbox =
+            exercisePicker.querySelector(
+              `.picker-checkbox[value="${CSS.escape(exerciseId)}"]`
+            );
 
-      const selectedIds =
-        Array.isArray(
-          draft.selectedPickerIds
-        )
-          ? draft.selectedPickerIds
-          : [];
-
-      selectedIds.forEach((id) => {
-        const checkbox =
-          exercisePicker.querySelector(
-            `.picker-checkbox[value="${id}"]`
-          );
-
-        if (checkbox) {
-          checkbox.checked = true;
+          if (checkbox) {
+            checkbox.checked =
+              true;
+          }
         }
-      });
+      );
+
+      refreshPickerOrder();
+      updatePickerButtons();
     }
 
     const savedCards =
@@ -1508,23 +2280,29 @@ async function restoreDraft(draft) {
           loadedExercises.find(
             (item) =>
               item.id ===
-              savedExerciseData.exerciseId
+              savedExerciseData
+                .exerciseId
           );
 
         if (!exercise) {
           exercise = {
             id:
-              savedExerciseData.exerciseId,
+              savedExerciseData
+                .exerciseId,
 
             name:
-              savedExerciseData.exerciseName ||
+              savedExerciseData
+                .exerciseName ||
               '種目',
 
             bodyPart:
               draft.bodyPart || '',
 
-            category: '',
-            lastWorkout: null
+            category:
+              '',
+
+            lastWorkout:
+              null
           };
         }
 
@@ -1588,7 +2366,8 @@ function togglePlanForm() {
 }
 
 function openPlanFormForDate(date) {
-  planDateInput.value = date;
+  planDateInput.value =
+    date;
 
   planForm.classList.remove(
     'hidden'
@@ -1605,8 +2384,11 @@ function openPlanFormForDate(date) {
   );
 
   planForm.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
+    behavior:
+      'smooth',
+
+    block:
+      'start'
   });
 }
 
@@ -1621,6 +2403,7 @@ async function handleSavePlan() {
     alert(
       '予定日を入力してください。'
     );
+
     return;
   }
 
@@ -1628,10 +2411,12 @@ async function handleSavePlan() {
     alert(
       '部位を選択してください。'
     );
+
     return;
   }
 
-  savePlanButton.disabled = true;
+  savePlanButton.disabled =
+    true;
 
   setMessage(
     planMessage,
@@ -1641,11 +2426,18 @@ async function handleSavePlan() {
 
   try {
     await postToGas({
-      action: 'createPlan',
-      date: date,
-      bodyPart: bodyPart,
+      action:
+        'createPlan',
+
+      date:
+        date,
+
+      bodyPart:
+        bodyPart,
+
       memo:
-        planMemoInput.value.trim()
+        planMemoInput.value
+          .trim()
     });
 
     setMessage(
@@ -1659,8 +2451,14 @@ async function handleSavePlan() {
 
     currentCalendarDate =
       new Date(
-        Number(date.slice(0, 4)),
-        Number(date.slice(5, 7)) - 1,
+        Number(
+          date.slice(0, 4)
+        ),
+
+        Number(
+          date.slice(5, 7)
+        ) - 1,
+
         1
       );
 
@@ -1677,7 +2475,8 @@ async function handleSavePlan() {
     );
 
   } finally {
-    savePlanButton.disabled = false;
+    savePlanButton.disabled =
+      false;
   }
 }
 
@@ -1687,10 +2486,12 @@ async function handleSavePlan() {
 
 async function loadCalendar() {
   const year =
-    currentCalendarDate.getFullYear();
+    currentCalendarDate
+      .getFullYear();
 
   const month =
-    currentCalendarDate.getMonth() + 1;
+    currentCalendarDate
+      .getMonth() + 1;
 
   calendarTitle.textContent =
     `${year}年${month}月`;
@@ -1701,11 +2502,17 @@ async function loadCalendar() {
   calendarGrid.innerHTML = '';
 
   try {
-    const data = await getFromGas({
-      action: 'getMonthlySessions',
-      year: year,
-      month: month
-    });
+    const data =
+      await getFromGas({
+        action:
+          'getMonthlySessions',
+
+        year:
+          year,
+
+        month:
+          month
+      });
 
     const sessions =
       data.sessions || [];
@@ -1716,7 +2523,9 @@ async function loadCalendar() {
       sessions
     );
 
-    if (sessions.length === 0) {
+    if (
+      sessions.length === 0
+    ) {
       calendarStatus.textContent =
         'この月の予定・記録はありません。';
 
@@ -1724,15 +2533,17 @@ async function loadCalendar() {
       const actualCount =
         sessions.filter(
           (session) =>
-            getSessionType(session) ===
-            'actual'
+            getSessionType(
+              session
+            ) === 'actual'
         ).length;
 
       const planCount =
         sessions.filter(
           (session) =>
-            getSessionType(session) ===
-            'plan'
+            getSessionType(
+              session
+            ) === 'plan'
         ).length;
 
       calendarStatus.textContent =
@@ -1758,29 +2569,43 @@ function renderCalendar(
 
   const grouped = {};
 
-  sessions.forEach((session) => {
-    if (!session.date) {
-      return;
-    }
+  sessions.forEach(
+    (session) => {
+      if (!session.date) {
+        return;
+      }
 
-    if (!grouped[session.date]) {
-      grouped[session.date] = [];
-    }
+      if (
+        !grouped[session.date]
+      ) {
+        grouped[session.date] =
+          [];
+      }
 
-    grouped[session.date].push(
-      session
-    );
-  });
+      grouped[
+        session.date
+      ].push(session);
+    }
+  );
 
   const firstDate =
-    new Date(year, month - 1, 1);
+    new Date(
+      year,
+      month - 1,
+      1
+    );
 
   const firstDayOffset =
-    (firstDate.getDay() + 6) % 7;
+    (
+      firstDate.getDay() + 6
+    ) % 7;
 
   const daysInMonth =
-    new Date(year, month, 0)
-      .getDate();
+    new Date(
+      year,
+      month,
+      0
+    ).getDate();
 
   for (
     let index = 0;
@@ -1788,7 +2613,9 @@ function renderCalendar(
     index += 1
   ) {
     const emptyCell =
-      document.createElement('div');
+      document.createElement(
+        'div'
+      );
 
     emptyCell.className =
       'calendar-day empty';
@@ -1804,31 +2631,51 @@ function renderCalendar(
     day += 1
   ) {
     const date =
-      `${String(year).padStart(4, '0')}-` +
-      `${String(month).padStart(2, '0')}-` +
-      `${String(day).padStart(2, '0')}`;
+      `${String(year).padStart(
+        4,
+        '0'
+      )}-` +
+      `${String(month).padStart(
+        2,
+        '0'
+      )}-` +
+      `${String(day).padStart(
+        2,
+        '0'
+      )}`;
 
     const cell =
-      document.createElement('button');
+      document.createElement(
+        'button'
+      );
 
-    cell.type = 'button';
-    cell.className = 'calendar-day';
+    cell.type =
+      'button';
+
+    cell.className =
+      'calendar-day';
 
     if (
       date === getTodayIsoDate()
     ) {
-      cell.classList.add('today');
+      cell.classList.add(
+        'today'
+      );
     }
 
     cell.addEventListener(
       'click',
       () => {
-        openPlanFormForDate(date);
+        openPlanFormForDate(
+          date
+        );
       }
     );
 
     const dayNumber =
-      document.createElement('div');
+      document.createElement(
+        'div'
+      );
 
     dayNumber.className =
       'calendar-day-number';
@@ -1837,7 +2684,9 @@ function renderCalendar(
       String(day);
 
     const badges =
-      document.createElement('div');
+      document.createElement(
+        'div'
+      );
 
     badges.className =
       'calendar-badges';
@@ -1847,28 +2696,37 @@ function renderCalendar(
     const daySessions =
       grouped[date] || [];
 
-    daySessions.forEach((session) => {
-      const type =
-        getSessionType(session);
+    daySessions.forEach(
+      (session) => {
+        const type =
+          getSessionType(
+            session
+          );
 
-      if (
-        !bodyPartMap[
-          session.bodyPart
-        ] ||
-        type === 'actual'
-      ) {
-        bodyPartMap[
-          session.bodyPart
-        ] = type;
+        if (
+          !bodyPartMap[
+            session.bodyPart
+          ] ||
+          type === 'actual'
+        ) {
+          bodyPartMap[
+            session.bodyPart
+          ] = type;
+        }
       }
-    });
+    );
 
     Object.entries(
       bodyPartMap
     ).forEach(
-      ([bodyPart, type]) => {
+      ([
+        bodyPart,
+        type
+      ]) => {
         const badge =
-          document.createElement('span');
+          document.createElement(
+            'span'
+          );
 
         badge.className =
           `body-badge ${type}`;
@@ -1882,14 +2740,23 @@ function renderCalendar(
           shortNames[bodyPart] ||
           bodyPart.slice(0, 1);
 
-        badges.appendChild(badge);
+        badges.appendChild(
+          badge
+        );
       }
     );
 
-    cell.appendChild(dayNumber);
-    cell.appendChild(badges);
+    cell.appendChild(
+      dayNumber
+    );
 
-    calendarGrid.appendChild(cell);
+    cell.appendChild(
+      badges
+    );
+
+    calendarGrid.appendChild(
+      cell
+    );
   }
 }
 
