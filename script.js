@@ -1,129 +1,65 @@
 const GAS_WEB_APP_URL =
   'https://script.google.com/macros/s/AKfycbwBo79Nq-fAgvkIAnncSnJW2u-f4o3rG_JhpESt0DqCdnwSijb6bQ71Se53PrwJS_vK/exec';
 
-const DRAFT_STORAGE_KEY =
-  'workoutLoggerDraftV2';
+const DRAFT_STORAGE_KEY = 'workoutLoggerDraftV2';
 
-const $ = (id) =>
-  document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 /* =========================
    DOM
 ========================= */
 
-const workoutDateInput =
-  $('workoutDate');
+const workoutDateInput = $('workoutDate');
+const bodyPartSelect = $('bodyPart');
+const sessionMemoInput = $('sessionMemo');
 
-const bodyPartSelect =
-  $('bodyPart');
+const loadExercisesButton = $('loadExercisesButton');
+const createExerciseButton = $('createExerciseButton');
+const archiveExercisesButton = $('archiveExercisesButton');
+const addSelectedExercisesButton = $('addSelectedExercisesButton');
 
-const sessionMemoInput =
-  $('sessionMemo');
+const exercisePicker = $('exercisePicker');
+const exerciseList = $('exerciseList');
+const statusMessage = $('statusMessage');
 
-const loadExercisesButton =
-  $('loadExercisesButton');
+const submitButton = $('submitButton');
+const submitMessage = $('submitMessage');
 
-const createExerciseButton =
-  $('createExerciseButton');
+const pickerItemTemplate = $('pickerItemTemplate');
+const exerciseTemplate = $('exerciseTemplate');
+const setTemplate = $('setTemplate');
+const subsetTemplate = $('subsetTemplate');
 
-const archiveExercisesButton =
-  $('archiveExercisesButton');
+const tabButtons = document.querySelectorAll('.tab-button');
+const logTab = $('logTab');
+const calendarTab = $('calendarTab');
 
-const addSelectedExercisesButton =
-  $('addSelectedExercisesButton');
+const prevMonthButton = $('prevMonthButton');
+const nextMonthButton = $('nextMonthButton');
+const todayMonthButton = $('todayMonthButton');
 
-const exercisePicker =
-  $('exercisePicker');
+const calendarTitle = $('calendarTitle');
+const calendarStatus = $('calendarStatus');
+const calendarGrid = $('calendarGrid');
 
-const exerciseList =
-  $('exerciseList');
-
-const statusMessage =
-  $('statusMessage');
-
-const submitButton =
-  $('submitButton');
-
-const submitMessage =
-  $('submitMessage');
-
-const pickerItemTemplate =
-  $('pickerItemTemplate');
-
-const exerciseTemplate =
-  $('exerciseTemplate');
-
-const setTemplate =
-  $('setTemplate');
-
-const subsetTemplate =
-  $('subsetTemplate');
-
-const tabButtons =
-  document.querySelectorAll(
-    '.tab-button'
-  );
-
-const logTab =
-  $('logTab');
-
-const calendarTab =
-  $('calendarTab');
-
-const prevMonthButton =
-  $('prevMonthButton');
-
-const nextMonthButton =
-  $('nextMonthButton');
-
-const todayMonthButton =
-  $('todayMonthButton');
-
-const calendarTitle =
-  $('calendarTitle');
-
-const calendarStatus =
-  $('calendarStatus');
-
-const calendarGrid =
-  $('calendarGrid');
-
-const togglePlanFormButton =
-  $('togglePlanFormButton');
-
-const planForm =
-  $('planForm');
-
-const planDateInput =
-  $('planDate');
-
-const planBodyPartSelect =
-  $('planBodyPart');
-
-const planMemoInput =
-  $('planMemo');
-
-const savePlanButton =
-  $('savePlanButton');
-
-const planMessage =
-  $('planMessage');
+const togglePlanFormButton = $('togglePlanFormButton');
+const planForm = $('planForm');
+const planDateInput = $('planDate');
+const planBodyPartSelect = $('planBodyPart');
+const planMemoInput = $('planMemo');
+const savePlanButton = $('savePlanButton');
+const planMessage = $('planMessage');
 
 /* =========================
    状態
 ========================= */
 
 let loadedExercises = [];
-
-/*
- * 種目をチェックした順番を保存する。
- * チェックボックスの画面上の順番ではなく、
- * 実際に選択した順番になる。
- */
 let selectedExerciseIds = [];
+let loadedBodyPart = '';
 
-let currentCalendarDate =
-  new Date();
+let currentCalendarDate = new Date();
+let calendarRequestNumber = 0;
 
 let isRestoringDraft = false;
 let isClearingAfterSave = false;
@@ -134,14 +70,12 @@ let draftSaveTimer = null;
 ========================= */
 
 function init() {
-  const today =
-    getTodayIsoDate();
+  const today = getTodayIsoDate();
 
-  workoutDateInput.value =
-    today;
+  workoutDateInput.value = today;
+  planDateInput.value = today;
 
-  planDateInput.value =
-    today;
+  archiveExercisesButton.disabled = true;
 
   loadExercisesButton.addEventListener(
     'click',
@@ -169,53 +103,35 @@ function init() {
   );
 
   tabButtons.forEach((button) => {
-    button.addEventListener(
-      'click',
-      () => {
-        switchTab(
-          button.dataset.tab
-        );
-      }
-    );
+    button.addEventListener('click', () => {
+      switchTab(button.dataset.tab);
+    });
   });
 
-  prevMonthButton.addEventListener(
-    'click',
-    () => {
-      currentCalendarDate =
-        new Date(
-          currentCalendarDate.getFullYear(),
-          currentCalendarDate.getMonth() - 1,
-          1
-        );
+  prevMonthButton.addEventListener('click', () => {
+    currentCalendarDate = new Date(
+      currentCalendarDate.getFullYear(),
+      currentCalendarDate.getMonth() - 1,
+      1
+    );
 
-      loadCalendar();
-    }
-  );
+    loadCalendar();
+  });
 
-  nextMonthButton.addEventListener(
-    'click',
-    () => {
-      currentCalendarDate =
-        new Date(
-          currentCalendarDate.getFullYear(),
-          currentCalendarDate.getMonth() + 1,
-          1
-        );
+  nextMonthButton.addEventListener('click', () => {
+    currentCalendarDate = new Date(
+      currentCalendarDate.getFullYear(),
+      currentCalendarDate.getMonth() + 1,
+      1
+    );
 
-      loadCalendar();
-    }
-  );
+    loadCalendar();
+  });
 
-  todayMonthButton.addEventListener(
-    'click',
-    () => {
-      currentCalendarDate =
-        new Date();
-
-      loadCalendar();
-    }
-  );
+  todayMonthButton.addEventListener('click', () => {
+    currentCalendarDate = new Date();
+    loadCalendar();
+  });
 
   togglePlanFormButton.addEventListener(
     'click',
@@ -243,10 +159,7 @@ function switchTab(tabName) {
     );
   });
 
-  logTab.classList.toggle(
-    'active',
-    tabName === 'log'
-  );
+  logTab.classList.toggle('active', tabName === 'log');
 
   calendarTab.classList.toggle(
     'active',
@@ -263,35 +176,21 @@ function switchTab(tabName) {
 ========================= */
 
 function getTodayIsoDate() {
-  const now =
-    new Date();
+  const now = new Date();
 
-  const offset =
-    now.getTimezoneOffset();
+  const localDate = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60000
+  );
 
-  const localDate =
-    new Date(
-      now.getTime() -
-      offset * 60 * 1000
-    );
-
-  return localDate
-    .toISOString()
-    .slice(0, 10);
+  return localDate.toISOString().slice(0, 10);
 }
 
 function setStatus(text) {
-  statusMessage.textContent =
-    text || '';
+  statusMessage.textContent = text || '';
 }
 
-function setMessage(
-  element,
-  text,
-  type
-) {
-  element.textContent =
-    text || '';
+function setMessage(element, text, type) {
+  element.textContent = text || '';
 
   element.className =
     element === submitMessage
@@ -317,20 +216,13 @@ function escapeHtml(value) {
 ========================= */
 
 async function getFromGas(params) {
-  const url =
-    new URL(GAS_WEB_APP_URL);
+  const url = new URL(GAS_WEB_APP_URL);
 
-  Object.entries(params).forEach(
-    ([key, value]) => {
-      url.searchParams.set(
-        key,
-        value
-      );
-    }
-  );
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
 
-  const response =
-    await fetch(url);
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(
@@ -338,35 +230,23 @@ async function getFromGas(params) {
     );
   }
 
-  const data =
-    await response.json();
+  const data = await response.json();
 
   if (!data.ok) {
-    throw new Error(
-      data.error ||
-      'GAS API error'
-    );
+    throw new Error(data.error || 'GAS API error');
   }
 
   return data;
 }
 
 async function postToGas(payload) {
-  const response =
-    await fetch(
-      GAS_WEB_APP_URL,
-      {
-        method: 'POST',
-
-        headers: {
-          'Content-Type':
-            'text/plain;charset=utf-8'
-        },
-
-        body:
-          JSON.stringify(payload)
-      }
-    );
+  const response = await fetch(GAS_WEB_APP_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify(payload)
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -374,14 +254,10 @@ async function postToGas(payload) {
     );
   }
 
-  const data =
-    await response.json();
+  const data = await response.json();
 
   if (!data.ok) {
-    throw new Error(
-      data.error ||
-      'GAS API error'
-    );
+    throw new Error(data.error || 'GAS API error');
   }
 
   return data;
@@ -392,75 +268,47 @@ async function postToGas(payload) {
 ========================= */
 
 async function handleLoadExercises() {
-  const bodyPart =
-    bodyPartSelect.value;
+  const bodyPart = bodyPartSelect.value;
 
   if (!bodyPart) {
-    alert(
-      '部位を選択してください。'
-    );
-
+    alert('部位を選択してください。');
     return;
   }
 
-  setStatus(
-    '種目を読み込み中...'
-  );
+  if (
+    exerciseList.querySelector('.exercise-card') &&
+    !confirm(
+      '種目を読み直すと、現在の種目入力欄を入れ替えます。続けますか？'
+    )
+  ) {
+    return;
+  }
 
-  setMessage(
-    submitMessage,
-    '',
-    ''
-  );
+  loadExercisesButton.disabled = true;
 
-  exercisePicker.innerHTML = '';
-  exerciseList.innerHTML = '';
-
-  loadedExercises = [];
-  selectedExerciseIds = [];
-
-  submitButton.disabled = true;
-
-  addSelectedExercisesButton.disabled =
-    true;
-
-  archiveExercisesButton.disabled =
-    true;
+  setStatus('種目を読み込み中...');
+  setMessage(submitMessage, '', '');
 
   try {
-    const data =
-      await getFromGas({
-        action:
-          'getExercisesWithLastWorkout',
+    const data = await getFromGas({
+      action: 'getExercisesWithLastWorkout',
+      bodyPart: bodyPart
+    });
 
-        bodyPart:
-          bodyPart
-      });
+    loadedExercises = data.exercises || [];
+    selectedExerciseIds = [];
+    loadedBodyPart = bodyPart;
 
-    loadedExercises =
-      data.exercises || [];
+    exerciseList.innerHTML = '';
+    submitButton.disabled = true;
 
-    if (
-      loadedExercises.length === 0
-    ) {
-      setStatus(
-        'この部位に登録されている種目がありません。'
-      );
-
-      return;
-    }
-
-    renderExercisePicker(
-      loadedExercises
-    );
+    renderExercisePicker(loadedExercises);
 
     setStatus(
-      `${bodyPart}の種目を読み込みました。` +
-      '今日やる種目を選んでください。'
+      loadedExercises.length
+        ? `${bodyPart}の種目を読み込みました。今日やる種目を選んでください。`
+        : 'この部位に登録されている種目がありません。「＋ 新しい種目」から追加できます。'
     );
-
-    addSelectedExercisesButton.disabled =
-      false;
 
     saveDraftDebounced();
 
@@ -468,109 +316,89 @@ async function handleLoadExercises() {
     console.error(error);
 
     setStatus(
-      '読み込みに失敗しました: ' +
-      error.message
+      '読み込みに失敗しました: ' + error.message
     );
+
+  } finally {
+    loadExercisesButton.disabled = false;
   }
+}
+
+/*
+ * 種目マスター操作後は一覧だけ更新する。
+ * 入力中のトレーニングカードは消さない。
+ */
+async function refreshExerciseMaster(bodyPart) {
+  const data = await getFromGas({
+    action: 'getExercisesWithLastWorkout',
+    bodyPart: bodyPart
+  });
+
+  const exercises = data.exercises || [];
+
+  selectedExerciseIds = selectedExerciseIds.filter(
+    (id) => exercises.some((exercise) => exercise.id === id)
+  );
+
+  loadedExercises = exercises;
+  loadedBodyPart = bodyPart;
+
+  renderExercisePicker(loadedExercises);
+  saveDraftDebounced();
 }
 
 /* =========================
    種目選択
 ========================= */
 
-function renderExercisePicker(
-  exercises
-) {
+function renderExercisePicker(exercises) {
   exercisePicker.innerHTML = '';
 
   exercises.forEach((exercise) => {
     const node =
-      pickerItemTemplate.content
-        .cloneNode(true);
+      pickerItemTemplate.content.cloneNode(true);
 
-    const item =
-      node.querySelector(
-        '.picker-item'
-      );
-
+    const item = node.querySelector('.picker-item');
     const checkbox =
-      node.querySelector(
-        '.picker-checkbox'
-      );
+      node.querySelector('.picker-checkbox');
 
-    item.dataset.exerciseId =
-      exercise.id;
+    item.dataset.exerciseId = exercise.id;
+    checkbox.value = exercise.id;
 
-    checkbox.value =
-      exercise.id;
-
-    /*
-     * 下書き復元時には
-     * 保存されていた選択状態を反映する。
-     */
     checkbox.checked =
-      selectedExerciseIds.includes(
-        exercise.id
-      );
+      selectedExerciseIds.includes(exercise.id);
 
-    node.querySelector(
-      '.picker-name'
-    ).textContent =
+    node.querySelector('.picker-name').textContent =
       exercise.name;
 
-    node.querySelector(
-      '.picker-category'
-    ).textContent = [
+    node.querySelector('.picker-category').textContent = [
       exercise.bodyPart,
       exercise.category
-    ]
-      .filter(Boolean)
-      .join(' / ');
+    ].filter(Boolean).join(' / ');
 
-    checkbox.addEventListener(
-      'change',
-      () => {
-        handlePickerChange(
-          exercise.id,
-          checkbox.checked
-        );
-      }
-    );
+    checkbox.addEventListener('change', () => {
+      handlePickerChange(
+        exercise.id,
+        checkbox.checked
+      );
+    });
 
-    exercisePicker.appendChild(
-      node
-    );
+    exercisePicker.appendChild(node);
   });
 
   refreshPickerOrder();
   updatePickerButtons();
 }
 
-function handlePickerChange(
-  exerciseId,
-  checked
-) {
+function handlePickerChange(exerciseId, checked) {
   if (checked) {
-    if (
-      !selectedExerciseIds.includes(
-        exerciseId
-      )
-    ) {
-      /*
-       * チェックした時点で末尾へ追加。
-       * これが選択順になる。
-       */
-      selectedExerciseIds.push(
-        exerciseId
-      );
+    if (!selectedExerciseIds.includes(exerciseId)) {
+      selectedExerciseIds.push(exerciseId);
     }
-
   } else {
-    selectedExerciseIds =
-      selectedExerciseIds.filter(
-        (id) =>
-          id !== exerciseId
-      );
+    selectedExerciseIds = selectedExerciseIds.filter(
+      (id) => id !== exerciseId
+    );
   }
 
   refreshPickerOrder();
@@ -582,98 +410,69 @@ function refreshPickerOrder() {
   exercisePicker.querySelectorAll(
     '.picker-item'
   ).forEach((item) => {
-    const exerciseId =
-      item.dataset.exerciseId;
-
-    const order =
-      selectedExerciseIds.indexOf(
-        exerciseId
-      );
+    const order = selectedExerciseIds.indexOf(
+      item.dataset.exerciseId
+    );
 
     const orderElement =
-      item.querySelector(
-        '.picker-order'
-      );
+      item.querySelector('.picker-order');
 
-    if (!orderElement) {
-      return;
+    if (orderElement) {
+      orderElement.textContent =
+        order >= 0 ? String(order + 1) : '';
     }
 
-    orderElement.textContent =
-      order >= 0
-        ? String(order + 1)
-        : '';
-
-    item.classList.toggle(
-      'selected',
-      order >= 0
-    );
+    item.classList.toggle('selected', order >= 0);
   });
 }
 
 function updatePickerButtons() {
-  const hasSelection =
-    selectedExerciseIds.length > 0;
+  const hasSelection = selectedExerciseIds.length > 0;
 
-  addSelectedExercisesButton.disabled =
-    !hasSelection;
-
-  archiveExercisesButton.disabled =
-    !hasSelection;
+  addSelectedExercisesButton.disabled = !hasSelection;
+  archiveExercisesButton.disabled = !hasSelection;
 }
 
 function handleAddSelectedExercises() {
   if (
-    selectedExerciseIds.length === 0
+    loadedBodyPart &&
+    bodyPartSelect.value !== loadedBodyPart
   ) {
-    alert(
-      '今日やる種目を選んでください。'
-    );
-
+    alert('部位が変更されています。種目を読み直してください。');
     return;
   }
 
-  /*
-   * DOM上のチェックボックス順ではなく、
-   * selectedExerciseIdsの順に追加する。
-   */
-  selectedExerciseIds.forEach(
-    (exerciseId) => {
-      const exercise =
-        loadedExercises.find(
-          (item) =>
-            item.id === exerciseId
-        );
+  if (selectedExerciseIds.length === 0) {
+    alert('今日やる種目を選んでください。');
+    return;
+  }
 
-      if (
-        exercise &&
-        !isExerciseAlreadyAdded(
-          exercise.id
-        )
-      ) {
-        renderExerciseCard(
-          exercise
-        );
-      }
-    }
-  );
-
-  submitButton.disabled =
-    !exerciseList.querySelector(
-      '.exercise-card'
+  selectedExerciseIds.forEach((exerciseId) => {
+    const exercise = loadedExercises.find(
+      (item) => item.id === exerciseId
     );
 
+    if (
+      exercise &&
+      !isExerciseAlreadyAdded(exercise.id)
+    ) {
+      renderExerciseCard(exercise);
+    }
+  });
+
+  submitButton.disabled =
+    !exerciseList.querySelector('.exercise-card');
+
+  setStatus('選んだ種目を、選択した順番で追加しました。');
   saveDraftDebounced();
 }
 
-function isExerciseAlreadyAdded(
-  exerciseId
-) {
-  return Boolean(
-    exerciseList.querySelector(
-      `.exercise-card[data-exercise-id="${CSS.escape(exerciseId)}"]`
-    )
-  );
+function isExerciseAlreadyAdded(exerciseId) {
+  return Array.from(
+    exerciseList.querySelectorAll('.exercise-card')
+  ).some((card) => {
+    return card.dataset.exerciseId === exerciseId;
+  });
 }
 
 /* =========================
@@ -681,176 +480,157 @@ function isExerciseAlreadyAdded(
 ========================= */
 
 async function handleCreateExercise() {
-  const bodyPart =
-    bodyPartSelect.value;
+  const bodyPart = bodyPartSelect.value;
 
   if (!bodyPart) {
+    alert('先に部位を選択してください。');
+    return;
+  }
+
+  if (
+    loadedBodyPart &&
+    loadedBodyPart !== bodyPart &&
+    exerciseList.querySelector('.exercise-card')
+  ) {
     alert(
-      '先に部位を選択してください。'
+      '入力中の種目と部位が異なります。先に記録を保存するか、元の部位に戻してください。'
     );
-
     return;
   }
 
-  const name =
-    prompt(
-      '新しい種目名を入力してください。'
-    );
+  const enteredName =
+    prompt('新しい種目名を入力してください。');
 
-  if (!name?.trim()) {
+  const name = String(enteredName || '').trim();
+
+  if (!name) {
     return;
   }
 
-  const duplicate =
-    loadedExercises.some(
-      (exercise) =>
-        exercise.name.trim() ===
-        name.trim()
+  const duplicate = loadedExercises.some((exercise) => {
+    return (
+      exercise.bodyPart === bodyPart &&
+      exercise.name.trim() === name
     );
+  });
 
   if (duplicate) {
-    alert(
-      '同じ名前の種目がすでにあります。'
-    );
-
+    alert('同じ名前の種目がすでにあります。');
     return;
   }
 
-  const category =
-    prompt(
-      'カテゴリーを入力してください。\n' +
-      '例：バーベル、ダンベル、マシン',
-      ''
-    );
-
-  createExerciseButton.disabled =
-    true;
-
-  setStatus(
-    '新しい種目を追加中...'
+  const enteredCategory = prompt(
+    'カテゴリーを入力してください。\n例：Barbell、Dumbbell、Machine、Cable',
+    ''
   );
+
+  if (enteredCategory === null) {
+    return;
+  }
+
+  const category = enteredCategory.trim();
+
+  createExerciseButton.disabled = true;
+  archiveExercisesButton.disabled = true;
+  loadExercisesButton.disabled = true;
+
+  setStatus('新しい種目を追加中...');
+
+  let created = false;
 
   try {
     await postToGas({
-      action:
-        'createExercise',
-
-      name:
-        name.trim(),
-
-      bodyPart:
-        bodyPart,
-
-      category:
-        String(
-          category || ''
-        ).trim()
+      action: 'createExercise',
+      name: name,
+      bodyPart: bodyPart,
+      category: category
     });
 
-    setStatus(
-      `${name.trim()}を追加しました。`
-    );
+    created = true;
 
-    await handleLoadExercises();
+    await refreshExerciseMaster(bodyPart);
+
+    setStatus(
+      `${name}を追加しました。一覧から選択できます。`
+    );
 
   } catch (error) {
     console.error(error);
 
     setStatus(
-      '種目の追加に失敗しました: ' +
-      error.message
+      created
+        ? '種目は追加できましたが、一覧の更新に失敗しました: ' +
+          error.message
+        : '種目の追加に失敗しました: ' + error.message
     );
 
   } finally {
-    createExerciseButton.disabled =
-      false;
+    createExerciseButton.disabled = false;
+    loadExercisesButton.disabled = false;
+    updatePickerButtons();
   }
 }
 
 /* =========================
-   種目マスター削除・非表示
+   種目マスター非表示
 ========================= */
 
 async function handleArchiveExercises() {
-  if (
-    selectedExerciseIds.length === 0
-  ) {
-    alert(
-      '削除する種目を選択してください。'
-    );
-
+  if (selectedExerciseIds.length === 0) {
+    alert('削除する種目を選択してください。');
     return;
   }
 
-  const selectedNames =
-    selectedExerciseIds
-      .map((exerciseId) => {
-        return loadedExercises.find(
-          (exercise) =>
-            exercise.id ===
-            exerciseId
-        )?.name;
-      })
-      .filter(Boolean);
+  const targetIds = [...selectedExerciseIds];
 
-  const shouldArchive =
-    confirm(
-      '次の種目を削除しますか？\n\n' +
-      selectedNames.join('\n') +
-      '\n\n過去の記録は残ります。'
-    );
+  const selectedNames = targetIds.map((exerciseId) => {
+    return loadedExercises.find(
+      (exercise) => exercise.id === exerciseId
+    )?.name;
+  }).filter(Boolean);
 
-  if (!shouldArchive) {
+  if (!confirm(
+    '次の種目を一覧から非表示にしますか？\n\n' +
+    selectedNames.join('\n') +
+    '\n\n過去の記録と、現在入力中のカードは残ります。'
+  )) {
     return;
   }
 
-  archiveExercisesButton.disabled =
-    true;
+  const bodyPart = loadedBodyPart || bodyPartSelect.value;
 
-  createExerciseButton.disabled =
-    true;
+  createExerciseButton.disabled = true;
+  archiveExercisesButton.disabled = true;
+  addSelectedExercisesButton.disabled = true;
+  loadExercisesButton.disabled = true;
 
-  addSelectedExercisesButton.disabled =
-    true;
-
-  setStatus(
-    '選択した種目を削除中...'
-  );
+  setStatus('選択した種目を非表示にしています...');
 
   try {
-    for (
-      const exerciseId
-      of selectedExerciseIds
-    ) {
+    for (const exerciseId of targetIds) {
       await postToGas({
-        action:
-          'archiveExercise',
-
-        exerciseId:
-          exerciseId
+        action: 'archiveExercise',
+        exerciseId: exerciseId
       });
     }
 
     selectedExerciseIds = [];
+    await refreshExerciseMaster(bodyPart);
 
     setStatus(
-      '選択した種目を削除しました。'
+      '選択した種目を非表示にしました。過去の記録は残っています。'
     );
-
-    await handleLoadExercises();
 
   } catch (error) {
     console.error(error);
 
     setStatus(
-      '種目の削除に失敗しました: ' +
-      error.message
+      '種目の非表示処理に失敗しました: ' + error.message
     );
 
   } finally {
-    createExerciseButton.disabled =
-      false;
-
+    createExerciseButton.disabled = false;
+    loadExercisesButton.disabled = false;
     updatePickerButtons();
   }
 }
@@ -859,174 +639,100 @@ async function handleArchiveExercises() {
    種目カード
 ========================= */
 
-function renderExerciseCard(
-  exercise,
-  savedExerciseData
-) {
+function renderExerciseCard(exercise, savedExerciseData) {
   const node =
-    exerciseTemplate.content
-      .cloneNode(true);
+    exerciseTemplate.content.cloneNode(true);
 
-  const card =
-    node.querySelector(
-      '.exercise-card'
-    );
-
+  const card = node.querySelector('.exercise-card');
   const setsContainer =
-    node.querySelector(
-      '.sets-container'
-    );
+    node.querySelector('.sets-container');
 
-  card.dataset.exerciseId =
-    exercise.id;
+  card.dataset.exerciseId = exercise.id;
+  card.dataset.exerciseName = exercise.name;
 
-  card.dataset.exerciseName =
+  node.querySelector('.exercise-name').textContent =
     exercise.name;
 
-  node.querySelector(
-    '.exercise-name'
-  ).textContent =
-    exercise.name;
-
-  node.querySelector(
-    '.exercise-category'
-  ).textContent = [
+  node.querySelector('.exercise-category').textContent = [
     exercise.bodyPart,
     exercise.category
-  ]
-    .filter(Boolean)
-    .join(' / ');
+  ].filter(Boolean).join(' / ');
 
-  node.querySelector(
-    '.last-workout-content'
-  ).innerHTML =
-    renderLastWorkoutHtml(
-      exercise.lastWorkout
-    );
+  node.querySelector('.last-workout-content').innerHTML =
+    renderLastWorkoutHtml(exercise.lastWorkout);
 
   const memoInput =
-    node.querySelector(
-      '.exercise-memo'
-    );
+    node.querySelector('.exercise-memo');
 
-  /*
-   * 前回メモは上部に表示する。
-   * 今回のメモ欄には自動入力せず、
-   * 新しい内容を入力できるようにする。
-   */
-  memoInput.value =
-    savedExerciseData?.memo || '';
+  memoInput.value = savedExerciseData?.memo || '';
 
   memoInput.addEventListener(
     'input',
     saveDraftDebounced
   );
 
-  const initialSets =
-    savedExerciseData?.sets?.length
-      ? savedExerciseData.sets
-      : groupPreviousSets(
-          exercise.lastWorkout
-        );
+  const initialSets = savedExerciseData?.sets?.length
+    ? savedExerciseData.sets
+    : groupPreviousSets(exercise.lastWorkout);
 
   if (initialSets.length > 0) {
     initialSets.forEach((set) => {
-      addSetBlock(
-        setsContainer,
-        set
-      );
+      addSetBlock(setsContainer, set);
     });
-
   } else {
-    for (
-      let index = 0;
-      index < 3;
-      index += 1
-    ) {
-      addSetBlock(
-        setsContainer,
-        {
-          weight: '',
-          reps: '',
-          success: true,
-          subsets: []
-        }
-      );
+    for (let index = 0; index < 3; index += 1) {
+      addSetBlock(setsContainer, {
+        weight: '',
+        reps: '',
+        success: true,
+        subsets: []
+      });
     }
   }
 
-  node.querySelector(
-    '.add-set-button'
-  ).addEventListener(
-    'click',
-    () => {
-      addSetBlock(
-        setsContainer,
-        {
-          weight: '',
-          reps: '',
-          success: true,
-          subsets: []
-        }
-      );
+  node.querySelector('.add-set-button')
+    .addEventListener('click', () => {
+      addSetBlock(setsContainer, {
+        weight: '',
+        reps: '',
+        success: true,
+        subsets: []
+      });
 
       saveDraftDebounced();
-    }
-  );
+    });
 
-  node.querySelector(
-    '.move-up-button'
-  ).addEventListener(
-    'click',
-    () => {
-      const previous =
-        card.previousElementSibling;
+  node.querySelector('.move-up-button')
+    .addEventListener('click', () => {
+      const previous = card.previousElementSibling;
 
       if (previous) {
-        exerciseList.insertBefore(
-          card,
-          previous
-        );
+        exerciseList.insertBefore(card, previous);
       }
 
       saveDraftDebounced();
-    }
-  );
+    });
 
-  node.querySelector(
-    '.move-down-button'
-  ).addEventListener(
-    'click',
-    () => {
-      const next =
-        card.nextElementSibling;
+  node.querySelector('.move-down-button')
+    .addEventListener('click', () => {
+      const next = card.nextElementSibling;
 
       if (next) {
-        exerciseList.insertBefore(
-          next,
-          card
-        );
+        exerciseList.insertBefore(next, card);
       }
 
       saveDraftDebounced();
-    }
-  );
+    });
 
-  node.querySelector(
-    '.remove-exercise-button'
-  ).addEventListener(
-    'click',
-    () => {
+  node.querySelector('.remove-exercise-button')
+    .addEventListener('click', () => {
       card.remove();
 
       submitButton.disabled =
-        !exerciseList.querySelector(
-          '.exercise-card'
-        );
+        !exerciseList.querySelector('.exercise-card');
 
       saveDraftDebounced();
-    }
-  );
+    });
 
   exerciseList.appendChild(node);
 }
@@ -1035,184 +741,115 @@ function renderExerciseCard(
    直近記録・前回メモ
 ========================= */
 
-function renderLastWorkoutHtml(
-  lastWorkout
-) {
+function renderLastWorkoutHtml(lastWorkout) {
   if (
     !lastWorkout ||
-    !Array.isArray(
-      lastWorkout.sets
-    ) ||
+    !Array.isArray(lastWorkout.sets) ||
     lastWorkout.sets.length === 0
   ) {
-    return (
-      '<div class="last-workout-empty">' +
-      '直近記録なし' +
-      '</div>'
-    );
+    return '<div class="last-workout-empty">直近記録なし</div>';
   }
 
   const previousMemo =
-    getPreviousExerciseMemo(
-      lastWorkout
+    getPreviousExerciseMemo(lastWorkout);
+
+  const lines = lastWorkout.sets.map((set) => {
+    const label = isDownSet(set)
+      ? formatSetNo(set.setNo) + ' ダウン'
+      : set.setNo + 'set';
+
+    const mark = set.success === false ? 'FAIL' : 'GOOD';
+
+    const failClass =
+      set.success === false ? ' last-set-fail' : '';
+
+    return (
+      '<div class="last-set-line' + failClass + '">' +
+        '<span class="last-set-label">' +
+          escapeHtml(label) + ':' +
+        '</span>' +
+        '<span>' +
+          escapeHtml(set.weight ?? '') + 'kg × ' +
+          escapeHtml(set.reps ?? '') + '回 ' +
+          mark +
+        '</span>' +
+      '</div>'
     );
+  }).join('');
 
-  const lines =
-    lastWorkout.sets
-      .map((set) => {
-        const downSet =
-          isDownSet(set);
+  /*
+   * HTML整形用の改行や空白を入れない。
+   * メモ本文の改行だけを表示する。
+   */
+  const memoHtml = previousMemo
+    ? (
+        '<div class="previous-exercise-memo">' +
+          '<div class="previous-memo-label">' +
+            '前回の種目メモ' +
+          '</div>' +
+          '<div class="previous-memo-text">' +
+            escapeHtml(previousMemo) +
+          '</div>' +
+        '</div>'
+      )
+    : (
+        '<div class="previous-exercise-memo empty">' +
+          '前回の種目メモなし' +
+        '</div>'
+      );
 
-        const label =
-          downSet
-            ? `${formatSetNo(
-                set.setNo
-              )} ダウン`
-            : `${set.setNo}set`;
-
-        const mark =
-          set.success === false
-            ? 'FAIL'
-            : 'GOOD';
-
-        const failClass =
-          set.success === false
-            ? ' last-set-fail'
-            : '';
-
-        return `
-          <div class="last-set-line${failClass}">
-            <span class="last-set-label">
-              ${escapeHtml(label)}:
-            </span>
-
-            <span>
-              ${escapeHtml(
-                set.weight ?? ''
-              )}kg ×
-              ${escapeHtml(
-                set.reps ?? ''
-              )}回
-              ${mark}
-            </span>
-          </div>
-        `;
-      })
-      .join('');
-
-  const memoHtml =
-    previousMemo
-      ? `
-        <div class="previous-exercise-memo">
-          <div class="previous-memo-label">
-            前回の種目メモ
-          </div>
-
-          <div class="previous-memo-text">
-            ${escapeHtml(
-              previousMemo
-            )}
-          </div>
-        </div>
-      `
-      : `
-        <div class="previous-exercise-memo empty">
-          前回の種目メモなし
-        </div>
-      `;
-
-  return `
-    <div class="last-workout-date">
-      日付：${escapeHtml(
-        lastWorkout.lastDate || ''
-      )}
-    </div>
-
-    <div class="last-workout-sets">
-      ${lines}
-    </div>
-
-    ${memoHtml}
-  `;
+  return (
+    '<div class="last-workout-date">' +
+      '日付：' +
+      escapeHtml(lastWorkout.lastDate || '') +
+    '</div>' +
+    '<div class="last-workout-sets">' +
+      lines +
+    '</div>' +
+    memoHtml
+  );
 }
 
-function getPreviousExerciseMemo(
-  lastWorkout
-) {
+function getPreviousExerciseMemo(lastWorkout) {
   if (
     !lastWorkout ||
-    !Array.isArray(
-      lastWorkout.sets
-    )
+    !Array.isArray(lastWorkout.sets)
   ) {
     return '';
   }
 
-  const memoSet =
-    lastWorkout.sets.find(
-      (set) => {
-        const memo =
-          cleanExerciseMemo(
-            set.memo
-          );
+  const memoSet = lastWorkout.sets.find((set) => {
+    return Boolean(cleanExerciseMemo(set.memo));
+  });
 
-        return Boolean(memo);
-      }
-    );
-
-  if (!memoSet) {
-    return '';
-  }
-
-  return cleanExerciseMemo(
-    memoSet.memo
-  );
+  return memoSet ? cleanExerciseMemo(memoSet.memo) : '';
 }
 
 function cleanExerciseMemo(memo) {
   return String(memo || '')
-    .replaceAll(
-      '【ダウンセット】',
-      ''
-    )
+    .replaceAll('【ダウンセット】', '')
     .trim();
 }
 
 function isDownSet(set) {
   return (
-    !Number.isInteger(
-      Number(set.setNo)
-    ) ||
-    String(set.memo || '')
-      .includes(
-        '【ダウンセット】'
-      )
+    !Number.isInteger(Number(set.setNo)) ||
+    String(set.memo || '').includes('【ダウンセット】')
   );
 }
 
 function formatSetNo(setNo) {
-  const number =
-    Number(setNo);
-
-  const parent =
-    Math.floor(number);
-
-  const child =
-    Math.round(
-      (number - parent) * 10
-    );
+  const number = Number(setNo);
+  const parent = Math.floor(number);
+  const child = Math.round((number - parent) * 10);
 
   return `${parent}-${child || 1}`;
 }
 
-function groupPreviousSets(
-  lastWorkout
-) {
+function groupPreviousSets(lastWorkout) {
   if (
     !lastWorkout ||
-    !Array.isArray(
-      lastWorkout.sets
-    )
+    !Array.isArray(lastWorkout.sets)
   ) {
     return [];
   }
@@ -1220,75 +857,44 @@ function groupPreviousSets(
   const normalSets = [];
   const setMap = {};
 
-  lastWorkout.sets.forEach(
-    (set) => {
-      const setNumber =
-        Number(set.setNo) || 1;
+  lastWorkout.sets.forEach((set) => {
+    const setNumber = Number(set.setNo) || 1;
+    const parentNumber = Math.floor(setNumber);
 
-      const parentNumber =
-        Math.floor(setNumber);
+    const childNumber = Math.round(
+      (setNumber - parentNumber) * 10
+    );
 
-      const childNumber =
-        Math.round(
-          (
-            setNumber -
-            parentNumber
-          ) * 10
-        );
-
-      if (
-        childNumber > 0 ||
-        isDownSet(set)
-      ) {
-        if (!setMap[parentNumber]) {
-          const emptyParent = {
-            weight: '',
-            reps: '',
-            success: true,
-            subsets: []
-          };
-
-          normalSets.push(
-            emptyParent
-          );
-
-          setMap[parentNumber] =
-            emptyParent;
-        }
-
-        setMap[
-          parentNumber
-        ].subsets.push({
-          weight:
-            set.weight ?? '',
-
-          reps:
-            set.reps ?? ''
-        });
-
-      } else {
-        const parentSet = {
-          weight:
-            set.weight ?? '',
-
-          reps:
-            set.reps ?? '',
-
-          success:
-            set.success !== false,
-
+    if (childNumber > 0 || isDownSet(set)) {
+      if (!setMap[parentNumber]) {
+        const emptyParent = {
+          weight: '',
+          reps: '',
+          success: true,
           subsets: []
         };
 
-        normalSets.push(
-          parentSet
-        );
-
-        setMap[parentNumber] =
-          parentSet;
+        normalSets.push(emptyParent);
+        setMap[parentNumber] = emptyParent;
       }
+
+      setMap[parentNumber].subsets.push({
+        weight: set.weight ?? '',
+        reps: set.reps ?? ''
+      });
+
+    } else {
+      const parentSet = {
+        weight: set.weight ?? '',
+        reps: set.reps ?? '',
+        success: set.success !== false,
+        subsets: []
+      };
+
+      normalSets.push(parentSet);
+      setMap[parentNumber] = parentSet;
     }
-  );
+  });
 
   return normalSets;
 }
@@ -1297,57 +903,26 @@ function groupPreviousSets(
    通常セット
 ========================= */
 
-function addSetBlock(
-  container,
-  initialValue = {}
-) {
-  const node =
-    setTemplate.content
-      .cloneNode(true);
+function addSetBlock(container, initialValue = {}) {
+  const node = setTemplate.content.cloneNode(true);
 
-  const block =
-    node.querySelector(
-      '.set-block'
-    );
+  const block = node.querySelector('.set-block');
+  const row = node.querySelector('.set-row');
 
-  const row =
-    node.querySelector(
-      '.set-row'
-    );
-
-  const weightInput =
-    node.querySelector(
-      '.set-weight'
-    );
-
-  const repsInput =
-    node.querySelector(
-      '.set-reps'
-    );
+  const weightInput = node.querySelector('.set-weight');
+  const repsInput = node.querySelector('.set-reps');
 
   const subsetsContainer =
-    node.querySelector(
-      '.subsets-container'
-    );
+    node.querySelector('.subsets-container');
 
-  weightInput.value =
-    initialValue.weight ?? '';
-
-  repsInput.value =
-    initialValue.reps ?? '';
+  weightInput.value = initialValue.weight ?? '';
+  repsInput.value = initialValue.reps ?? '';
 
   row.dataset.success =
-    initialValue.success === false
-      ? 'false'
-      : 'true';
+    initialValue.success === false ? 'false' : 'true';
 
-  [
-    weightInput,
-    repsInput
-  ].forEach((input) => {
-    enableSelectAllOnFocus(
-      input
-    );
+  [weightInput, repsInput].forEach((input) => {
+    enableSelectAllOnFocus(input);
 
     input.addEventListener(
       'input',
@@ -1357,116 +932,63 @@ function addSetBlock(
 
   updateResultButtons(row);
 
-  node.querySelectorAll(
-    '.result-button'
-  ).forEach((button) => {
-    button.addEventListener(
-      'click',
-      () => {
-        row.dataset.success =
-          button.dataset.success;
+  node.querySelectorAll('.result-button')
+    .forEach((button) => {
+      button.addEventListener('click', () => {
+        row.dataset.success = button.dataset.success;
 
-        updateResultButtons(
-          row
-        );
-
+        updateResultButtons(row);
         saveDraftDebounced();
-      }
-    );
-  });
+      });
+    });
 
-  node.querySelector(
-    '.remove-set-button'
-  ).addEventListener(
-    'click',
-    () => {
+  node.querySelector('.remove-set-button')
+    .addEventListener('click', () => {
       block.remove();
 
-      refreshSetNumbers(
-        container
-      );
-
+      refreshSetNumbers(container);
       saveDraftDebounced();
-    }
-  );
+    });
 
-  node.querySelector(
-    '.add-subset-button'
-  ).addEventListener(
-    'click',
-    () => {
-      addSubsetRow(
-        subsetsContainer,
-        {}
-      );
-
+  node.querySelector('.add-subset-button')
+    .addEventListener('click', () => {
+      addSubsetRow(subsetsContainer, {});
       saveDraftDebounced();
-    }
-  );
+    });
 
-  const savedSubsets =
-    Array.isArray(
-      initialValue.subsets
-    )
-      ? initialValue.subsets
-      : [];
+  const savedSubsets = Array.isArray(initialValue.subsets)
+    ? initialValue.subsets
+    : [];
 
-  savedSubsets.forEach(
-    (subset) => {
-      addSubsetRow(
-        subsetsContainer,
-        subset
-      );
-    }
-  );
+  savedSubsets.forEach((subset) => {
+    addSubsetRow(subsetsContainer, subset);
+  });
 
   container.appendChild(node);
-
-  refreshSetNumbers(
-    container
-  );
+  refreshSetNumbers(container);
 }
 
 /* =========================
    ダウンセット
 ========================= */
 
-function addSubsetRow(
-  container,
-  initialValue = {}
-) {
+function addSubsetRow(container, initialValue = {}) {
   const node =
-    subsetTemplate.content
-      .cloneNode(true);
+    subsetTemplate.content.cloneNode(true);
 
-  const row =
-    node.querySelector(
-      '.subset-row'
-    );
+  const row = node.querySelector('.subset-row');
 
   const weightInput =
-    node.querySelector(
-      '.subset-weight'
-    );
+    node.querySelector('.subset-weight');
 
   const repsInput =
-    node.querySelector(
-      '.subset-reps'
-    );
+    node.querySelector('.subset-reps');
 
-  weightInput.value =
-    initialValue.weight ?? '';
+  weightInput.value = initialValue.weight ?? '';
+  repsInput.value = initialValue.reps ?? '';
 
-  repsInput.value =
-    initialValue.reps ?? '';
-
-  [
-    weightInput,
-    repsInput
-  ].forEach((input) => {
-    enableSelectAllOnFocus(
-      input
-    );
+  [weightInput, repsInput].forEach((input) => {
+    enableSelectAllOnFocus(input);
 
     input.addEventListener(
       'input',
@@ -1474,111 +996,64 @@ function addSubsetRow(
     );
   });
 
-  node.querySelector(
-    '.remove-subset-button'
-  ).addEventListener(
-    'click',
-    () => {
+  node.querySelector('.remove-subset-button')
+    .addEventListener('click', () => {
       row.remove();
 
-      refreshSubsetNumbers(
-        container
-      );
-
+      refreshSubsetNumbers(container);
       saveDraftDebounced();
-    }
-  );
+    });
 
   container.appendChild(node);
-
-  refreshSubsetNumbers(
-    container
-  );
+  refreshSubsetNumbers(container);
 }
 
-function refreshSetNumbers(
-  container
-) {
-  const blocks =
-    container.querySelectorAll(
-      ':scope > .set-block'
-    );
-
-  blocks.forEach(
-    (block, index) => {
-      block.querySelector(
-        '.set-number'
-      ).textContent =
-        String(index + 1);
-    }
-  );
+function refreshSetNumbers(container) {
+  container.querySelectorAll(
+    ':scope > .set-block'
+  ).forEach((block, index) => {
+    block.querySelector('.set-number').textContent =
+      String(index + 1);
+  });
 }
 
-function refreshSubsetNumbers(
-  container
-) {
-  const rows =
-    container.querySelectorAll(
-      ':scope > .subset-row'
-    );
-
-  rows.forEach(
-    (row, index) => {
-      row.querySelector(
-        '.subset-number'
-      ).textContent =
-        `${index + 1}段目`;
-    }
-  );
+function refreshSubsetNumbers(container) {
+  container.querySelectorAll(
+    ':scope > .subset-row'
+  ).forEach((row, index) => {
+    row.querySelector('.subset-number').textContent =
+      `${index + 1}段目`;
+  });
 }
 
-function enableSelectAllOnFocus(
-  input
-) {
-  input.addEventListener(
-    'focus',
-    () => {
-      setTimeout(() => {
+function enableSelectAllOnFocus(input) {
+  const selectAll = () => {
+    setTimeout(() => {
+      try {
         input.select();
-      }, 0);
-    }
-  );
+      } catch (error) {
+        console.debug(error);
+      }
+    }, 0);
+  };
 
-  input.addEventListener(
-    'mouseup',
-    (event) => {
-      event.preventDefault();
-    }
-  );
+  input.addEventListener('focus', selectAll);
 
-  input.addEventListener(
-    'touchend',
-    () => {
-      setTimeout(() => {
-        input.select();
-      }, 0);
-    }
-  );
+  input.addEventListener('mouseup', (event) => {
+    event.preventDefault();
+  });
+
+  input.addEventListener('touchend', selectAll);
 }
 
 function updateResultButtons(row) {
-  const success =
-    row.dataset.success !==
-    'false';
+  const success = row.dataset.success !== 'false';
 
-  row.querySelector(
-    '.result-button.success'
-  ).classList.toggle(
-    'active',
-    success
-  );
+  row.querySelector('.result-button.success')
+    .classList.toggle('active', success);
 
-  row.querySelector(
-    '.result-button.fail'
-  ).classList.toggle(
-    'active',
-    !success
-  );
+  row.querySelector('.result-button.fail')
+    .classList.toggle('active', !success);
 }
 
 /* =========================
@@ -1586,21 +1061,23 @@ function updateResultButtons(row) {
 ========================= */
 
 function collectWorkoutPayload() {
-  const date =
-    workoutDateInput.value;
-
-  const bodyPart =
-    bodyPartSelect.value;
+  const date = workoutDateInput.value;
+  const bodyPart = bodyPartSelect.value;
 
   if (!date) {
-    throw new Error(
-      '日付を入力してください。'
-    );
+    throw new Error('日付を入力してください。');
   }
 
   if (!bodyPart) {
+    throw new Error('部位を選択してください。');
+  }
+
+  if (
+    loadedBodyPart &&
+    bodyPart !== loadedBodyPart
+  ) {
     throw new Error(
-      '部位を選択してください。'
+      '入力中の種目と選択中の部位が異なります。部位を元に戻してください。'
     );
   }
 
@@ -1610,187 +1087,104 @@ function collectWorkoutPayload() {
     '.exercise-card'
   ).forEach((card) => {
     const exerciseMemo =
-      card.querySelector(
-        '.exercise-memo'
-      ).value.trim();
+      card.querySelector('.exercise-memo').value.trim();
 
-    const setBlocks =
-      card.querySelectorAll(
-        '.sets-container > .set-block'
+    card.querySelectorAll(
+      '.sets-container > .set-block'
+    ).forEach((block, index) => {
+      const parentSetNo = index + 1;
+
+      const normalSet = readInputPair(
+        block.querySelector('.set-weight'),
+        block.querySelector('.set-reps')
       );
 
-    setBlocks.forEach(
-      (block, index) => {
-        const parentSetNo =
-          index + 1;
+      if (normalSet) {
+        sets.push({
+          exerciseId: card.dataset.exerciseId,
+          exerciseName: card.dataset.exerciseName,
+          setNo: parentSetNo,
+          weight: normalSet.weight,
+          reps: normalSet.reps,
+          success:
+            block.querySelector('.set-row')
+              .dataset.success !== 'false',
+          memo: exerciseMemo
+        });
+      }
 
-        const normalSet =
-          readInputPair(
-            block.querySelector(
-              '.set-weight'
-            ),
+      block.querySelectorAll(
+        '.subset-row'
+      ).forEach((subset, subsetIndex) => {
+        const pair = readInputPair(
+          subset.querySelector('.subset-weight'),
+          subset.querySelector('.subset-reps')
+        );
 
-            block.querySelector(
-              '.set-reps'
-            )
-          );
-
-        if (normalSet) {
-          sets.push({
-            exerciseId:
-              card.dataset.exerciseId,
-
-            exerciseName:
-              card.dataset.exerciseName,
-
-            setNo:
-              parentSetNo,
-
-            weight:
-              normalSet.weight,
-
-            reps:
-              normalSet.reps,
-
-            success:
-              block.querySelector(
-                '.set-row'
-              ).dataset.success !==
-              'false',
-
-            memo:
-              exerciseMemo
-          });
+        if (!pair) {
+          return;
         }
 
-        const subsets =
-          block.querySelectorAll(
-            '.subset-row'
-          );
-
-        subsets.forEach(
-          (
-            subset,
-            subsetIndex
-          ) => {
-            const pair =
-              readInputPair(
-                subset.querySelector(
-                  '.subset-weight'
-                ),
-
-                subset.querySelector(
-                  '.subset-reps'
-                )
-              );
-
-            if (!pair) {
-              return;
-            }
-
-            sets.push({
-              exerciseId:
-                card.dataset
-                  .exerciseId,
-
-              exerciseName:
-                card.dataset
-                  .exerciseName,
-
-              setNo:
-                Number(
-                  `${parentSetNo}.${subsetIndex + 1}`
-                ),
-
-              weight:
-                pair.weight,
-
-              reps:
-                pair.reps,
-
-              success:
-                true,
-
-              memo:
-                `【ダウンセット】${exerciseMemo}`
-            });
-          }
-        );
-      }
-    );
+        sets.push({
+          exerciseId: card.dataset.exerciseId,
+          exerciseName: card.dataset.exerciseName,
+          setNo: Number(
+            `${parentSetNo}.${subsetIndex + 1}`
+          ),
+          weight: pair.weight,
+          reps: pair.reps,
+          success: true,
+          memo: `【ダウンセット】${exerciseMemo}`
+        });
+      });
+    });
   });
 
   if (sets.length === 0) {
+    throw new Error('登録するセットがありません。');
+  }
+
+  return {
+    date: date,
+    bodyPart: bodyPart,
+    sessionName:
+      `${date.replaceAll('-', '/')} ${bodyPart}`,
+    memo: sessionMemoInput.value.trim(),
+    sets: sets
+  };
+}
+
+function readInputPair(weightInput, repsInput) {
+  const weightText = weightInput.value;
+  const repsText = repsInput.value;
+
+  if (weightText === '' && repsText === '') {
+    return null;
+  }
+
+  if (weightText === '' || repsText === '') {
     throw new Error(
-      '登録するセットがありません。'
+      '重量と回数の片方だけが入力されたセットがあります。両方入力するか、両方空欄にしてください。'
+    );
+  }
+
+  const weight = Number(weightText);
+  const reps = Number(repsText);
+
+  if (
+    !Number.isFinite(weight) ||
+    !Number.isFinite(reps) ||
+    weight < 0 ||
+    reps < 0
+  ) {
+    throw new Error(
+      '重量・回数には0以上の数値を入力してください。'
     );
   }
 
   return {
-    date:
-      date,
-
-    bodyPart:
-      bodyPart,
-
-    sessionName:
-      `${date.replaceAll(
-        '-',
-        '/'
-      )} ${bodyPart}`,
-
-    memo:
-      sessionMemoInput.value
-        .trim(),
-
-    sets:
-      sets
-  };
-}
-
-function readInputPair(
-  weightInput,
-  repsInput
-) {
-  const weightText =
-    weightInput.value;
-
-  const repsText =
-    repsInput.value;
-
-  if (
-    weightText === '' &&
-    repsText === ''
-  ) {
-    return null;
-  }
-
-  if (
-    weightText === '' ||
-    repsText === ''
-  ) {
-    return null;
-  }
-
-  const weight =
-    Number(weightText);
-
-  const reps =
-    Number(repsText);
-
-  if (
-    Number.isNaN(weight) ||
-    Number.isNaN(reps)
-  ) {
-    return null;
-  }
-
-  return {
-    weight:
-      weight,
-
-    reps:
-      reps
+    weight: weight,
+    reps: reps
   };
 }
 
@@ -1799,39 +1193,31 @@ function readInputPair(
 ========================= */
 
 async function handleSubmitWorkout() {
-  const shouldSave =
-    confirm(
-      'この内容でNotionに保存しますか？'
-    );
+  let payload;
 
-  if (!shouldSave) {
+  try {
+    payload = collectWorkoutPayload();
+  } catch (error) {
+    setMessage(
+      submitMessage,
+      error.message,
+      'error'
+    );
     return;
   }
 
-  submitButton.disabled =
-    true;
+  if (!confirm('この内容でNotionに保存しますか？')) {
+    return;
+  }
 
-  setMessage(
-    submitMessage,
-    '保存中...',
-    ''
-  );
+  submitButton.disabled = true;
+
+  setMessage(submitMessage, '保存中...', '');
 
   try {
-    const payload =
-      collectWorkoutPayload();
-
     await postToGas(payload);
 
     isClearingAfterSave = true;
-
-    if (draftSaveTimer) {
-      clearTimeout(
-        draftSaveTimer
-      );
-
-      draftSaveTimer = null;
-    }
 
     clearDraft();
     resetWorkoutForm();
@@ -1840,8 +1226,7 @@ async function handleSubmitWorkout() {
 
     setMessage(
       submitMessage,
-      'Notionに保存しました。' +
-      '入力データと下書きを削除しました。',
+      'Notionに保存しました。入力データと下書きを削除しました。',
       'success'
     );
 
@@ -1851,25 +1236,20 @@ async function handleSubmitWorkout() {
     console.error(error);
 
     isClearingAfterSave = false;
+    submitButton.disabled = false;
 
     setMessage(
       submitMessage,
-      '保存に失敗しました: ' +
-      error.message,
+      '保存に失敗しました: ' + error.message,
       'error'
     );
-
-    submitButton.disabled =
-      false;
 
     saveDraftDebounced();
   }
 }
 
 function resetWorkoutForm() {
-  workoutDateInput.value =
-    getTodayIsoDate();
-
+  workoutDateInput.value = getTodayIsoDate();
   bodyPartSelect.value = '';
   sessionMemoInput.value = '';
 
@@ -1878,15 +1258,11 @@ function resetWorkoutForm() {
 
   loadedExercises = [];
   selectedExerciseIds = [];
+  loadedBodyPart = '';
 
-  addSelectedExercisesButton.disabled =
-    true;
-
-  archiveExercisesButton.disabled =
-    true;
-
-  submitButton.disabled =
-    true;
+  addSelectedExercisesButton.disabled = true;
+  archiveExercisesButton.disabled = true;
+  submitButton.disabled = true;
 
   setStatus(
     '部位を選択して種目を読み込んでください。'
@@ -1894,7 +1270,7 @@ function resetWorkoutForm() {
 }
 
 /* =========================
-   下書き保存
+   下書き自動保存
 ========================= */
 
 function setupDraftAutoSave() {
@@ -1918,142 +1294,81 @@ function setupDraftAutoSave() {
     saveDraftNow
   );
 
-  document.addEventListener(
-    'visibilitychange',
-    () => {
-      if (
-        document.visibilityState ===
-        'hidden'
-      ) {
-        saveDraftNow();
-      }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      saveDraftNow();
     }
-  );
+  });
 }
 
 function saveDraftDebounced() {
-  if (
-    isRestoringDraft ||
-    isClearingAfterSave
-  ) {
+  if (isRestoringDraft || isClearingAfterSave) {
     return;
   }
 
   if (draftSaveTimer) {
-    clearTimeout(
-      draftSaveTimer
-    );
+    clearTimeout(draftSaveTimer);
   }
 
-  draftSaveTimer =
-    setTimeout(() => {
-      draftSaveTimer = null;
-      saveDraftNow();
-    }, 300);
+  draftSaveTimer = setTimeout(() => {
+    draftSaveTimer = null;
+    saveDraftNow();
+  }, 300);
 }
 
 function collectDraftState() {
-  const exerciseCards =
-    Array.from(
-      exerciseList.querySelectorAll(
-        '.exercise-card'
+  const exerciseCards = Array.from(
+    exerciseList.querySelectorAll('.exercise-card')
+  ).map((card) => {
+    const sets = Array.from(
+      card.querySelectorAll(
+        '.sets-container > .set-block'
       )
-    ).map((card) => {
-      const sets =
-        Array.from(
-          card.querySelectorAll(
-            '.sets-container > .set-block'
-          )
-        ).map((block) => {
-          const subsets =
-            Array.from(
-              block.querySelectorAll(
-                '.subset-row'
-              )
-            ).map((subset) => {
-              return {
-                weight:
-                  subset.querySelector(
-                    '.subset-weight'
-                  ).value,
-
-                reps:
-                  subset.querySelector(
-                    '.subset-reps'
-                  ).value
-              };
-            });
-
-          return {
-            weight:
-              block.querySelector(
-                '.set-weight'
-              ).value,
-
-            reps:
-              block.querySelector(
-                '.set-reps'
-              ).value,
-
-            success:
-              block.querySelector(
-                '.set-row'
-              ).dataset.success !==
-              'false',
-
-            subsets:
-              subsets
-          };
-        });
+    ).map((block) => {
+      const subsets = Array.from(
+        block.querySelectorAll('.subset-row')
+      ).map((subset) => {
+        return {
+          weight:
+            subset.querySelector('.subset-weight').value,
+          reps:
+            subset.querySelector('.subset-reps').value
+        };
+      });
 
       return {
-        exerciseId:
-          card.dataset.exerciseId,
-
-        exerciseName:
-          card.dataset.exerciseName,
-
-        memo:
-          card.querySelector(
-            '.exercise-memo'
-          ).value,
-
-        sets:
-          sets
+        weight:
+          block.querySelector('.set-weight').value,
+        reps:
+          block.querySelector('.set-reps').value,
+        success:
+          block.querySelector('.set-row')
+            .dataset.success !== 'false',
+        subsets: subsets
       };
     });
 
+    return {
+      exerciseId: card.dataset.exerciseId,
+      exerciseName: card.dataset.exerciseName,
+      memo: card.querySelector('.exercise-memo').value,
+      sets: sets
+    };
+  });
+
   return {
-    savedAt:
-      new Date().toISOString(),
-
-    date:
-      workoutDateInput.value,
-
-    bodyPart:
-      bodyPartSelect.value,
-
-    sessionMemo:
-      sessionMemoInput.value,
-
-    loadedExercises:
-      loadedExercises,
-
-    /*
-     * 選択順をそのまま保存する。
-     */
-    selectedPickerIds: [
-      ...selectedExerciseIds
-    ],
-
-    exerciseCards:
-      exerciseCards
+    savedAt: new Date().toISOString(),
+    date: workoutDateInput.value,
+    bodyPart: bodyPartSelect.value,
+    loadedBodyPart: loadedBodyPart,
+    sessionMemo: sessionMemoInput.value,
+    loadedExercises: loadedExercises,
+    selectedPickerIds: [...selectedExerciseIds],
+    exerciseCards: exerciseCards
   };
 }
 
-function hasMeaningfulDraftData(
-  draft
-) {
+function hasMeaningfulDraftData(draft) {
   return Boolean(
     draft.bodyPart ||
     draft.sessionMemo?.trim() ||
@@ -2063,132 +1378,75 @@ function hasMeaningfulDraftData(
 }
 
 function saveDraftNow() {
-  if (
-    isRestoringDraft ||
-    isClearingAfterSave
-  ) {
+  if (isRestoringDraft || isClearingAfterSave) {
     return;
   }
 
-  const draft =
-    collectDraftState();
-
   try {
-    if (
-      hasMeaningfulDraftData(
-        draft
-      )
-    ) {
+    const draft = collectDraftState();
+
+    if (hasMeaningfulDraftData(draft)) {
       localStorage.setItem(
         DRAFT_STORAGE_KEY,
         JSON.stringify(draft)
       );
-
     } else {
       clearDraft();
     }
 
   } catch (error) {
-    console.error(
-      '下書き保存に失敗しました',
-      error
-    );
+    console.error('下書き保存に失敗しました', error);
   }
 }
 
 function clearDraft() {
   if (draftSaveTimer) {
-    clearTimeout(
-      draftSaveTimer
-    );
-
+    clearTimeout(draftSaveTimer);
     draftSaveTimer = null;
   }
 
   try {
-    localStorage.removeItem(
-      DRAFT_STORAGE_KEY
-    );
-
-    /*
-     * 旧バージョンの下書きも削除する。
-     */
-    localStorage.removeItem(
-      'workoutLoggerDraftV1'
-    );
-
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem('workoutLoggerDraftV1');
   } catch (error) {
-    console.error(
-      '下書き削除に失敗しました',
-      error
-    );
+    console.error('下書き削除に失敗しました', error);
   }
 }
 
 function loadDraft() {
   try {
     const text =
-      localStorage.getItem(
-        DRAFT_STORAGE_KEY
-      ) ||
-      localStorage.getItem(
-        'workoutLoggerDraftV1'
-      );
+      localStorage.getItem(DRAFT_STORAGE_KEY) ||
+      localStorage.getItem('workoutLoggerDraftV1');
 
-    return text
-      ? JSON.parse(text)
-      : null;
+    return text ? JSON.parse(text) : null;
 
   } catch (error) {
-    clearDraft();
-
+    console.error('下書きを読み取れませんでした', error);
     return null;
   }
 }
 
 async function restoreDraftOnOpen() {
-  const draft =
-    loadDraft();
+  const draft = loadDraft();
 
-  if (
-    !draft ||
-    !hasMeaningfulDraftData(
-      draft
-    )
-  ) {
+  if (!draft || !hasMeaningfulDraftData(draft)) {
     return;
   }
 
-  const savedDate =
-    draft.savedAt
-      ? new Date(
-          draft.savedAt
-        ).toLocaleString(
-          'ja-JP'
-        )
-      : '';
+  const savedDate = draft.savedAt
+    ? new Date(draft.savedAt).toLocaleString('ja-JP')
+    : '';
 
-  const shouldRestore =
-    confirm(
-      '保存前の下書きがあります。' +
-      '復元しますか？' +
-      (
-        savedDate
-          ? `\n\n保存日時: ${savedDate}`
-          : ''
-      )
-    );
+  const shouldRestore = confirm(
+    '保存前の下書きがあります。復元しますか？' +
+    (savedDate ? `\n\n保存日時: ${savedDate}` : '')
+  );
 
   if (!shouldRestore) {
-    const shouldDelete =
-      confirm(
-        'この下書きを削除しますか？'
-      );
-
-    if (shouldDelete) {
+    if (confirm('この下書きを削除しますか？')) {
       clearDraft();
     }
-
     return;
   }
 
@@ -2200,135 +1458,75 @@ async function restoreDraft(draft) {
 
   try {
     workoutDateInput.value =
-      draft.date ||
-      getTodayIsoDate();
+      draft.date || getTodayIsoDate();
 
-    bodyPartSelect.value =
-      draft.bodyPart || '';
+    bodyPartSelect.value = draft.bodyPart || '';
+    sessionMemoInput.value = draft.sessionMemo || '';
 
-    sessionMemoInput.value =
-      draft.sessionMemo || '';
+    loadedBodyPart =
+      draft.loadedBodyPart || draft.bodyPart || '';
 
-    loadedExercises =
-      Array.isArray(
-        draft.loadedExercises
-      )
-        ? draft.loadedExercises
-        : [];
+    loadedExercises = Array.isArray(draft.loadedExercises)
+      ? draft.loadedExercises
+      : [];
 
     selectedExerciseIds =
-      Array.isArray(
-        draft.selectedPickerIds
-      )
-        ? [
-            ...draft.selectedPickerIds
-          ]
+      Array.isArray(draft.selectedPickerIds)
+        ? [...draft.selectedPickerIds]
         : [];
+
+    exerciseList.innerHTML = '';
 
     if (
       loadedExercises.length === 0 &&
-      draft.bodyPart
+      loadedBodyPart
     ) {
-      const data =
-        await getFromGas({
-          action:
-            'getExercisesWithLastWorkout',
-
-          bodyPart:
-            draft.bodyPart
+      try {
+        const data = await getFromGas({
+          action: 'getExercisesWithLastWorkout',
+          bodyPart: loadedBodyPart
         });
 
-      loadedExercises =
-        data.exercises || [];
-    }
+        loadedExercises = data.exercises || [];
 
-    if (
-      loadedExercises.length > 0
-    ) {
-      renderExercisePicker(
-        loadedExercises
-      );
-
-      selectedExerciseIds.forEach(
-        (exerciseId) => {
-          const checkbox =
-            exercisePicker.querySelector(
-              `.picker-checkbox[value="${CSS.escape(exerciseId)}"]`
-            );
-
-          if (checkbox) {
-            checkbox.checked =
-              true;
-          }
-        }
-      );
-
-      refreshPickerOrder();
-      updatePickerButtons();
-    }
-
-    const savedCards =
-      Array.isArray(
-        draft.exerciseCards
-      )
-        ? draft.exerciseCards
-        : [];
-
-    savedCards.forEach(
-      (savedExerciseData) => {
-        let exercise =
-          loadedExercises.find(
-            (item) =>
-              item.id ===
-              savedExerciseData
-                .exerciseId
-          );
-
-        if (!exercise) {
-          exercise = {
-            id:
-              savedExerciseData
-                .exerciseId,
-
-            name:
-              savedExerciseData
-                .exerciseName ||
-              '種目',
-
-            bodyPart:
-              draft.bodyPart || '',
-
-            category:
-              '',
-
-            lastWorkout:
-              null
-          };
-        }
-
-        renderExerciseCard(
-          exercise,
-          savedExerciseData
-        );
+      } catch (error) {
+        // 通信できなくても、保存済みの入力内容は復元する。
+        console.error(error);
       }
-    );
+    }
+
+    renderExercisePicker(loadedExercises);
+
+    const savedCards = Array.isArray(draft.exerciseCards)
+      ? draft.exerciseCards
+      : [];
+
+    savedCards.forEach((savedExerciseData) => {
+      const exercise = loadedExercises.find((item) => {
+        return item.id === savedExerciseData.exerciseId;
+      }) || {
+        id: savedExerciseData.exerciseId,
+        name: savedExerciseData.exerciseName || '種目',
+        bodyPart: loadedBodyPart,
+        category: '',
+        lastWorkout: null
+      };
+
+      renderExerciseCard(exercise, savedExerciseData);
+    });
 
     submitButton.disabled =
-      !exerciseList.querySelector(
-        '.exercise-card'
-      );
+      !exerciseList.querySelector('.exercise-card');
 
     setStatus(
-      `${draft.bodyPart || ''}` +
-      'の下書きを復元しました。'
+      `${loadedBodyPart}の下書きを復元しました。`
     );
 
   } catch (error) {
     console.error(error);
 
     setStatus(
-      '下書き復元に失敗しました: ' +
-      error.message
+      '下書き復元に失敗しました: ' + error.message
     );
 
   } finally {
@@ -2337,107 +1535,63 @@ async function restoreDraft(draft) {
 }
 
 /* =========================
-   予定
+   予定フォーム
 ========================= */
 
 function togglePlanForm() {
-  const opening =
-    planForm.classList.contains(
-      'hidden'
-    );
+  const opening = planForm.classList.contains('hidden');
 
-  planForm.classList.toggle(
-    'hidden',
-    !opening
-  );
+  planForm.classList.toggle('hidden', !opening);
 
   togglePlanFormButton.textContent =
-    opening
-      ? '予定を閉じる'
-      : '予定を追加';
+    opening ? '予定を閉じる' : '予定を追加';
 
-  if (
-    opening &&
-    !planDateInput.value
-  ) {
-    planDateInput.value =
-      getTodayIsoDate();
+  if (opening && !planDateInput.value) {
+    planDateInput.value = getTodayIsoDate();
   }
 }
 
 function openPlanFormForDate(date) {
-  planDateInput.value =
-    date;
+  planDateInput.value = date;
+  planForm.classList.remove('hidden');
 
-  planForm.classList.remove(
-    'hidden'
-  );
-
-  togglePlanFormButton.textContent =
-    '予定を閉じる';
+  togglePlanFormButton.textContent = '予定を閉じる';
 
   setMessage(
     planMessage,
-    '予定日を選択しました。' +
-    '部位を選んで保存してください。',
+    '予定日を選択しました。部位を選んで保存してください。',
     ''
   );
 
   planForm.scrollIntoView({
-    behavior:
-      'smooth',
-
-    block:
-      'start'
+    behavior: 'smooth',
+    block: 'start'
   });
 }
 
 async function handleSavePlan() {
-  const date =
-    planDateInput.value;
-
-  const bodyPart =
-    planBodyPartSelect.value;
+  const date = planDateInput.value;
+  const bodyPart = planBodyPartSelect.value;
 
   if (!date) {
-    alert(
-      '予定日を入力してください。'
-    );
-
+    alert('予定日を入力してください。');
     return;
   }
 
   if (!bodyPart) {
-    alert(
-      '部位を選択してください。'
-    );
-
+    alert('部位を選択してください。');
     return;
   }
 
-  savePlanButton.disabled =
-    true;
-
-  setMessage(
-    planMessage,
-    '予定を保存中...',
-    ''
-  );
+  savePlanButton.disabled = true;
+  setMessage(planMessage, '予定を保存中...', '');
 
   try {
     await postToGas({
-      action:
-        'createPlan',
-
-      date:
-        date,
-
-      bodyPart:
-        bodyPart,
-
-      memo:
-        planMemoInput.value
-          .trim()
+      action: 'createPlan',
+      date: date,
+      bodyPart: bodyPart,
+      memo: planMemoInput.value.trim()
     });
 
     setMessage(
@@ -2449,18 +1603,11 @@ async function handleSavePlan() {
     planMemoInput.value = '';
     planBodyPartSelect.value = '';
 
-    currentCalendarDate =
-      new Date(
-        Number(
-          date.slice(0, 4)
-        ),
-
-        Number(
-          date.slice(5, 7)
-        ) - 1,
-
-        1
-      );
+    currentCalendarDate = new Date(
+      Number(date.slice(0, 4)),
+      Number(date.slice(5, 7)) - 1,
+      1
+    );
 
     await loadCalendar();
 
@@ -2469,14 +1616,12 @@ async function handleSavePlan() {
 
     setMessage(
       planMessage,
-      '予定の保存に失敗しました: ' +
-      error.message,
+      '予定の保存に失敗しました: ' + error.message,
       'error'
     );
 
   } finally {
-    savePlanButton.disabled =
-      false;
+    savePlanButton.disabled = false;
   }
 }
 
@@ -2485,251 +1630,143 @@ async function handleSavePlan() {
 ========================= */
 
 async function loadCalendar() {
-  const year =
-    currentCalendarDate
-      .getFullYear();
+  const requestNumber = ++calendarRequestNumber;
 
-  const month =
-    currentCalendarDate
-      .getMonth() + 1;
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth() + 1;
 
-  calendarTitle.textContent =
-    `${year}年${month}月`;
-
-  calendarStatus.textContent =
-    '読み込み中...';
-
+  calendarTitle.textContent = `${year}年${month}月`;
+  calendarStatus.textContent = '読み込み中...';
   calendarGrid.innerHTML = '';
 
   try {
-    const data =
-      await getFromGas({
-        action:
-          'getMonthlySessions',
+    const data = await getFromGas({
+      action: 'getMonthlySessions',
+      year: year,
+      month: month
+    });
 
-        year:
-          year,
+    if (requestNumber !== calendarRequestNumber) {
+      return;
+    }
 
-        month:
-          month
-      });
+    const sessions = data.sessions || [];
 
-    const sessions =
-      data.sessions || [];
+    renderCalendar(year, month, sessions);
 
-    renderCalendar(
-      year,
-      month,
-      sessions
-    );
-
-    if (
-      sessions.length === 0
-    ) {
+    if (sessions.length === 0) {
       calendarStatus.textContent =
         'この月の予定・記録はありません。';
-
-    } else {
-      const actualCount =
-        sessions.filter(
-          (session) =>
-            getSessionType(
-              session
-            ) === 'actual'
-        ).length;
-
-      const planCount =
-        sessions.filter(
-          (session) =>
-            getSessionType(
-              session
-            ) === 'plan'
-        ).length;
-
-      calendarStatus.textContent =
-        `実績 ${actualCount}件 / ` +
-        `予定 ${planCount}件`;
+      return;
     }
+
+    const actualCount = sessions.filter((session) => {
+      return getSessionType(session) === 'actual';
+    }).length;
+
+    const planCount = sessions.filter((session) => {
+      return getSessionType(session) === 'plan';
+    }).length;
+
+    calendarStatus.textContent =
+      `実績 ${actualCount}件 / 予定 ${planCount}件`;
 
   } catch (error) {
     console.error(error);
 
-    calendarStatus.textContent =
-      '読み込みに失敗しました: ' +
-      error.message;
+    if (requestNumber === calendarRequestNumber) {
+      calendarStatus.textContent =
+        '読み込みに失敗しました: ' + error.message;
+    }
   }
 }
 
-function renderCalendar(
-  year,
-  month,
-  sessions
-) {
+function renderCalendar(year, month, sessions) {
   calendarGrid.innerHTML = '';
 
   const grouped = {};
 
-  sessions.forEach(
-    (session) => {
-      if (!session.date) {
-        return;
-      }
-
-      if (
-        !grouped[session.date]
-      ) {
-        grouped[session.date] =
-          [];
-      }
-
-      grouped[
-        session.date
-      ].push(session);
+  sessions.forEach((session) => {
+    if (!session.date) {
+      return;
     }
-  );
 
-  const firstDate =
-    new Date(
-      year,
-      month - 1,
-      1
-    );
+    const dateKey = String(session.date).slice(0, 10);
 
-  const firstDayOffset =
-    (
-      firstDate.getDay() + 6
-    ) % 7;
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
 
-  const daysInMonth =
-    new Date(
-      year,
-      month,
-      0
-    ).getDate();
+    grouped[dateKey].push(session);
+  });
 
-  for (
-    let index = 0;
-    index < firstDayOffset;
-    index += 1
-  ) {
-    const emptyCell =
-      document.createElement(
-        'div'
-      );
+  const firstDate = new Date(year, month - 1, 1);
+  const firstDayOffset = (firstDate.getDay() + 6) % 7;
 
-    emptyCell.className =
-      'calendar-day empty';
+  const daysInMonth = new Date(
+    year,
+    month,
+    0
+  ).getDate();
 
-    calendarGrid.appendChild(
-      emptyCell
-    );
+  for (let index = 0; index < firstDayOffset; index += 1) {
+    const emptyCell = document.createElement('div');
+
+    emptyCell.className = 'calendar-day empty';
+    calendarGrid.appendChild(emptyCell);
   }
 
-  for (
-    let day = 1;
-    day <= daysInMonth;
-    day += 1
-  ) {
+  for (let day = 1; day <= daysInMonth; day += 1) {
     const date =
-      `${String(year).padStart(
-        4,
-        '0'
-      )}-` +
-      `${String(month).padStart(
-        2,
-        '0'
-      )}-` +
-      `${String(day).padStart(
-        2,
-        '0'
-      )}`;
+      `${String(year).padStart(4, '0')}-` +
+      `${String(month).padStart(2, '0')}-` +
+      `${String(day).padStart(2, '0')}`;
 
-    const cell =
-      document.createElement(
-        'button'
-      );
+    const cell = document.createElement('button');
 
-    cell.type =
-      'button';
+    cell.type = 'button';
+    cell.className = 'calendar-day';
 
-    cell.className =
-      'calendar-day';
-
-    if (
-      date === getTodayIsoDate()
-    ) {
-      cell.classList.add(
-        'today'
-      );
+    if (date === getTodayIsoDate()) {
+      cell.classList.add('today');
     }
 
-    cell.addEventListener(
-      'click',
-      () => {
-        openPlanFormForDate(
-          date
-        );
-      }
-    );
+    cell.addEventListener('click', () => {
+      openPlanFormForDate(date);
+    });
 
-    const dayNumber =
-      document.createElement(
-        'div'
-      );
+    const dayNumber = document.createElement('div');
 
-    dayNumber.className =
-      'calendar-day-number';
+    dayNumber.className = 'calendar-day-number';
+    dayNumber.textContent = String(day);
 
-    dayNumber.textContent =
-      String(day);
-
-    const badges =
-      document.createElement(
-        'div'
-      );
-
-    badges.className =
-      'calendar-badges';
+    const badges = document.createElement('div');
+    badges.className = 'calendar-badges';
 
     const bodyPartMap = {};
 
-    const daySessions =
-      grouped[date] || [];
+    (grouped[date] || []).forEach((session) => {
+      const bodyPart = session.bodyPart || '';
 
-    daySessions.forEach(
-      (session) => {
-        const type =
-          getSessionType(
-            session
-          );
-
-        if (
-          !bodyPartMap[
-            session.bodyPart
-          ] ||
-          type === 'actual'
-        ) {
-          bodyPartMap[
-            session.bodyPart
-          ] = type;
-        }
+      if (!bodyPart) {
+        return;
       }
-    );
 
-    Object.entries(
-      bodyPartMap
-    ).forEach(
-      ([
-        bodyPart,
-        type
-      ]) => {
-        const badge =
-          document.createElement(
-            'span'
-          );
+      const type = getSessionType(session);
 
-        badge.className =
-          `body-badge ${type}`;
+      if (
+        !bodyPartMap[bodyPart] ||
+        type === 'actual'
+      ) {
+        bodyPartMap[bodyPart] = type;
+      }
+    });
+
+    Object.entries(bodyPartMap).forEach(
+      ([bodyPart, type]) => {
+        const badge = document.createElement('span');
+
+        badge.className = `body-badge ${type}`;
 
         const shortNames = {
           '背中': '背',
@@ -2737,38 +1774,23 @@ function renderCalendar(
         };
 
         badge.textContent =
-          shortNames[bodyPart] ||
-          bodyPart.slice(0, 1);
+          shortNames[bodyPart] || bodyPart.slice(0, 1);
 
-        badges.appendChild(
-          badge
-        );
+        badges.appendChild(badge);
       }
     );
 
-    cell.appendChild(
-      dayNumber
-    );
-
-    cell.appendChild(
-      badges
-    );
-
-    calendarGrid.appendChild(
-      cell
-    );
+    cell.appendChild(dayNumber);
+    cell.appendChild(badges);
+    calendarGrid.appendChild(cell);
   }
 }
 
 function getSessionType(session) {
-  if (
+  return (
     session.type === 'actual' ||
     session.status === 'Done'
-  ) {
-    return 'actual';
-  }
-
-  return 'plan';
+  ) ? 'actual' : 'plan';
 }
 
 /* =========================
