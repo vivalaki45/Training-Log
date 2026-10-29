@@ -2,41 +2,41 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-​
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   />
-​
+
   <meta
     name="theme-color"
     content="#111111"
   />
-​
+
   <title>Workout Logger</title>
-​
+
   <link
     rel="stylesheet"
     href="style.css"
   />
 </head>
-​
+
 <body>
   <main class="app">
     <header class="app-header">
       <h1>Workout Logger</h1>
-​
+
       <div class="training-rule">
         <div>
           前回より、１回でも多く、１kgでも重く
         </div>
-​
+
         <div>
           10回出来たら次ある重さに
         </div>
       </div>
     </header>
-​
+
     <nav
       class="tabs"
       aria-label="画面切り替え"
@@ -48,7 +48,7 @@
       >
         記録
       </button>
-​
+
       <button
         type="button"
         class="tab-button"
@@ -57,7 +57,7 @@
         カレンダー
       </button>
     </nav>
-​
+
     <!-- トレーニング記録 -->
     <section
       id="logTab"
@@ -66,10 +66,10 @@
       <!-- 今日の設定 -->
       <section class="card">
         <h2>今日の設定</h2>
-​
+
         <label class="field date-field">
           <span>日付</span>
-​
+
           <div class="date-input-wrap">
             <span
               class="date-icon"
@@ -77,68 +77,68 @@
             >
               📅
             </span>
-​
+
             <input
               type="date"
               id="workoutDate"
             />
           </div>
         </label>
-​
+
         <label class="field">
           <span>メインの部位</span>
-​
+
           <select id="bodyPart">
             <option value="">
               選択してください
             </option>
-​
+
             <option value="胸">
               胸
             </option>
-​
+
             <option value="背中">
               背中
             </option>
-​
+
             <option value="脚">
               脚
             </option>
-​
+
             <option value="腕">
               腕
             </option>
-​
+
             <option value="肩">
               肩
             </option>
-​
+
             <option value="腹">
               腹
             </option>
-​
+
             <option value="全身">
               全身
             </option>
           </select>
         </label>
-​
+
         <fieldset class="extra-body-parts">
           <legend>一緒に表示する部位（複数選択可）</legend>
           <div id="extraBodyParts" class="extra-body-parts-list"></div>
           <p>メインの部位は上で選択してください。</p>
         </fieldset>
-​
+
         <label class="field">
           <span>全体メモ</span>
-​
+
           <textarea
             id="sessionMemo"
             rows="2"
             placeholder="例：体調、混雑、フォーム感覚など"
           ></textarea>
         </label>
-​
+
         <button
           type="button"
           id="loadExercisesButton"
@@ -147,23 +147,23 @@
           種目を読み込む
         </button>
       </section>
-​
+
       <!-- 種目選択 -->
       <section class="card">
         <h2>今日やる種目を選ぶ</h2>
-​
+
         <div
           id="statusMessage"
           class="status-message"
         >
           部位を選んで「種目を読み込む」を押してください。
         </div>
-​
+
         <div
           id="exercisePicker"
           class="exercise-picker"
         ></div>
-​
+
         <!-- 種目マスター操作 -->
         <div class="exercise-master-actions">
           <button
@@ -173,7 +173,7 @@
           >
             ＋ 新しい種目
           </button>
-​
+
           <button
             type="button"
             id="archiveExercisesButton"
@@ -182,7 +182,7 @@
             選択した種目を削除
           </button>
         </div>
-​
+
         <button
           type="button"
           id="addSelectedExercisesButton"
@@ -192,17 +192,17 @@
           選んだ種目を追加
         </button>
       </section>
-​
+
       <!-- 今回のトレーニング -->
       <section class="card">
         <h2>今回のトレーニング</h2>
-​
+
         <div
           id="exerciseList"
           class="exercise-list"
         ></div>
       </section>
-​
+
       <!-- 保存 -->
       <section class="card submit-card">
         <button
@@ -213,14 +213,14 @@
         >
           Notionに保存
         </button>
-​
+
         <div
           id="submitMessage"
           class="submit-message"
         ></div>
       </section>
     </section>
-​
+
     <!-- カレンダー -->
     <section
       id="calendarTab"
@@ -235,12 +235,12 @@
           >
             前月
           </button>
-​
+
           <div>
             <h2 id="calendarTitle">
               カレンダー
             </h2>
-​
+
             <div
               id="calendarStatus"
               class="calendar-status"
@@ -248,7 +248,7 @@
               読み込み前
             </div>
           </div>
-​
+
           <button
             type="button"
             id="nextMonthButton"
@@ -257,7 +257,7 @@
             次月
           </button>
         </div>
-​
+
         <div class="calendar-actions">
           <button
             type="button"
@@ -266,7 +266,7 @@
           >
             今月に戻る
           </button>
-​
+
           <button
             type="button"
             id="togglePlanFormButton"
@@ -275,71 +275,71 @@
             予定を追加
           </button>
         </div>
-​
+
         <!-- 予定追加フォーム -->
         <div
           id="planForm"
           class="plan-form hidden"
         >
           <h3>予定を追加</h3>
-​
+
           <label class="field">
             <span>予定日</span>
-​
+
             <input
               type="date"
               id="planDate"
             />
           </label>
-​
+
           <label class="field">
             <span>部位</span>
-​
+
             <select id="planBodyPart">
               <option value="">
                 選択してください
               </option>
-​
+
               <option value="胸">
                 胸
               </option>
-​
+
               <option value="背中">
                 背中
               </option>
-​
+
               <option value="脚">
                 脚
               </option>
-​
+
               <option value="腕">
                 腕
               </option>
-​
+
               <option value="肩">
                 肩
               </option>
-​
+
               <option value="腹">
                 腹
               </option>
-​
+
               <option value="全身">
                 全身
               </option>
             </select>
           </label>
-​
+
           <label class="field">
             <span>予定メモ</span>
-​
+
             <textarea
               id="planMemo"
               rows="2"
               placeholder="例：胸の日、ベンチ重めなど"
             ></textarea>
           </label>
-​
+
           <button
             type="button"
             id="savePlanButton"
@@ -347,13 +347,13 @@
           >
             予定を保存
           </button>
-​
+
           <div
             id="planMessage"
             class="plan-message"
           ></div>
         </div>
-​
+
         <div
           class="calendar-weekdays"
           aria-hidden="true"
@@ -366,33 +366,33 @@
           <div>土</div>
           <div>日</div>
         </div>
-​
+
         <div
           id="calendarGrid"
           class="calendar-grid"
         ></div>
-​
+
         <div class="calendar-legend">
           <span>
             <i
               class="legend-sample actual-sample"
             ></i>
-​
+
             実績
           </span>
-​
+
           <span>
             <i
               class="legend-sample plan-sample"
             ></i>
-​
+
             予定
           </span>
         </div>
       </section>
     </section>
   </main>
-​
+
   <!-- 種目選択テンプレート -->
   <template id="pickerItemTemplate">
     <label class="picker-item">
@@ -400,27 +400,27 @@
         type="checkbox"
         class="picker-checkbox"
       />
-​
+
       <span class="picker-order"></span>
-​
+
       <span class="picker-text">
         <span class="picker-name"></span>
-​
+
         <span class="picker-category"></span>
       </span>
     </label>
   </template>
-​
+
   <!-- 種目カード -->
   <template id="exerciseTemplate">
     <article class="exercise-card">
       <div class="exercise-header">
         <div>
           <h3 class="exercise-name"></h3>
-​
+
           <p class="exercise-category"></p>
         </div>
-​
+
         <div class="exercise-actions">
           <button
             type="button"
@@ -429,7 +429,7 @@
           >
             ↑
           </button>
-​
+
           <button
             type="button"
             class="move-down-button"
@@ -437,7 +437,7 @@
           >
             ↓
           </button>
-​
+
           <button
             type="button"
             class="remove-exercise-button"
@@ -446,20 +446,20 @@
           </button>
         </div>
       </div>
-​
+
       <!-- 前回記録 -->
       <div class="last-workout">
         <h4>直近記録・前回メモ</h4>
-​
+
         <div class="last-workout-content"></div>
       </div>
-​
+
       <!-- 今回記録 -->
       <div class="current-workout">
         <h4>今回</h4>
-​
+
         <div class="sets-container"></div>
-​
+
         <button
           type="button"
           class="button small add-set-button"
@@ -467,10 +467,10 @@
           セット追加
         </button>
       </div>
-​
+
       <label class="field">
         <span>種目メモ</span>
-​
+
         <textarea
           class="exercise-memo"
           rows="2"
@@ -479,16 +479,16 @@
       </label>
     </article>
   </template>
-​
+
   <!-- 通常セット -->
   <template id="setTemplate">
     <div class="set-block">
       <div class="set-row">
         <div class="set-number"></div>
-​
+
         <label>
           <span>kg</span>
-​
+
           <input
             type="number"
             class="set-weight"
@@ -497,10 +497,10 @@
             min="0"
           />
         </label>
-​
+
         <label>
           <span>回</span>
-​
+
           <input
             type="number"
             class="set-reps"
@@ -509,7 +509,7 @@
             min="0"
           />
         </label>
-​
+
         <div
           class="result-toggle"
           role="group"
@@ -522,7 +522,7 @@
           >
             GOOD
           </button>
-​
+
           <button
             type="button"
             class="result-button fail"
@@ -531,7 +531,7 @@
             FAIL
           </button>
         </div>
-​
+
         <button
           type="button"
           class="remove-set-button"
@@ -540,9 +540,9 @@
           ×
         </button>
       </div>
-​
+
       <div class="subsets-container"></div>
-​
+
       <button
         type="button"
         class="add-subset-button"
@@ -551,7 +551,7 @@
       </button>
     </div>
   </template>
-​
+
   <!-- ダウンセット -->
   <template id="subsetTemplate">
     <div class="subset-row">
@@ -561,20 +561,20 @@
       >
         └
       </div>
-​
+
       <div class="subset-main">
         <div class="subset-heading">
           <span class="subset-badge">
             ダウンセット
           </span>
-​
+
           <span class="subset-number"></span>
         </div>
-​
+
         <div class="subset-inputs">
           <label>
             <span>kg</span>
-​
+
             <input
               type="number"
               class="subset-weight"
@@ -583,10 +583,10 @@
               min="0"
             />
           </label>
-​
+
           <label>
             <span>回</span>
-​
+
             <input
               type="number"
               class="subset-reps"
@@ -595,7 +595,7 @@
               min="0"
             />
           </label>
-​
+
           <button
             type="button"
             class="remove-subset-button"
@@ -607,8 +607,7 @@
       </div>
     </div>
   </template>
-​
+
   <script src="script.js"></script>
 </body>
 </html>
-​
